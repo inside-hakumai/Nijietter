@@ -35,12 +35,25 @@ class Storing:
         statuses_media = status['extended_entities']['media']
 
         for status_media in statuses_media:
-            path = self.save_image(status_media)
-            self.link_sym_user(path, status)
+            if not self.image_already_saved(status_media):
+                path = self.save_image(status_media)
+                self.link_sym_user(path, status)
 
     def save_if_has_media(self, status):
         if 'extended_entities' in status:
             self.save(status)
+
+    def image_already_saved(self, status_media):
+        media_id = status_media['id_str']
+        store_filename = media_id + '.jpg'
+        store_subdir = media_id[:5]
+        assumed_file_path = os.path.join(self.store_images, store_subdir, store_filename)
+
+        if os.path.exists(assumed_file_path):
+            self.logger('The image is already saved')
+            return True
+        else:
+            return False
 
     def save_image(self, status_media, create_sym_user = False):
         media_id = status_media['id_str']
