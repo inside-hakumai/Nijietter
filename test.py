@@ -8,6 +8,8 @@ from nijietter import Storing
 from nijietter import get_module_logger
 from nijietter.model import ensure_original_from_retweet
 from nijietter.slack import SlackApp
+from tools.hierarchic_logger import HierarchicLogger
+import logging
 
 
 def on_sigint(_signal, _frame):
@@ -15,13 +17,15 @@ def on_sigint(_signal, _frame):
         myStream.disconnect()
 
         if not myStream.running:
-            logger.debug('[{}] Stream connection is closed'.format(datetime.now()))
+            logger.debug('Stream connection is closed')
 
     sys.exit(0)
 
 
 pp = pprint.PrettyPrinter(indent=4)
-logger = get_module_logger(__name__)
+logging.setLoggerClass(HierarchicLogger)
+logger = get_module_logger()
+
 
 # override tweepy.StreamListener to add logic to on_status
 class MyStreamListener(tweepy.StreamListener):
@@ -35,12 +39,16 @@ class MyStreamListener(tweepy.StreamListener):
         # storing.save(status)
         # print(status.text)
         # pp.pprint(vars(status))
+        logger.raise_hier_level()
+        logger.debug('START - MyStreamListerner.on_status')
         tweet_status = ensure_original_from_retweet(status._json)
         self.storing.log_status_detail(tweet_status)
         save_paths = self.storing.save_if_has_media(tweet_status)
         if len(save_paths) != 0:
             self.slack_bot.send_image(save_paths, tweet_status['text'])
 
+        logger.drop_hier_level()
+        logger.debug('END - MyStreamListerner.on_status')
         '''
         if 'extended_entities' in status._json:
             # pp.pprint(status._json['extended_entities']['media'])
@@ -69,12 +77,11 @@ api = tweepy.API(auth)
 # for tweet in public_tweets:
 #     print(tweet.text)
 
-myStream = tweepy.Stream(auth = api.auth, listener=MyStreamListener())
+myStream = tweepy.Stream(auth=api.auth, listener=MyStreamListener())
 
 signal.signal(signal.SIGINT, on_sigint)
 
-now = datetime.now()
-logger.debug('[{}] Build stream connection'.format(now))
+logger.debug('Build stream connection')
 
 # myStream.filter(track=['python'])
 myStream.userstream()

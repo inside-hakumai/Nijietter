@@ -22,7 +22,7 @@ class Storing:
         self.store_images = os.path.join(self.store_root, 'images/')
         self.store_sym_user = os.path.join(self.store_root, 'sym_user/')
         self.store_sym_date = os.path.join(self.store_root, 'sym_date/')
-        self.logger = get_module_logger(__name__)
+        self.logger = get_module_logger()
 
         if ensure_dir(self.store_images):
             self.logger.debug('create directory ' + self.store_images)
@@ -56,7 +56,7 @@ class Storing:
         assumed_file_path = os.path.join(self.store_images, store_subdir, store_filename)
 
         if os.path.exists(assumed_file_path):
-            self.logger('The image is already saved')
+            self.logger.debug('The image is already saved')
             return True
         else:
             return False
@@ -94,7 +94,11 @@ class Storing:
             image_id = ', '.join(map(lambda m: m['id_str'], status['extended_entities']['media']))
         else:
             image_id = 'no images'
-        self.logger.debug('[{}] {}\nText : {}...\nImage: {}'.format(created_time.astimezone(tz=JST()), tweet_id, text_head, image_id))
+
+        self.logger.debug('Tweet time:        {}'.format(created_time.astimezone(tz=JST())))
+        self.logger.debug('Tweet ID:          {}'.format(tweet_id))
+        self.logger.debug('Tweet head:        {}...'.format(text_head))
+        self.logger.debug('Attached image ID: {}'.format(image_id))
 
 
 def ensure_original_from_retweet(status):

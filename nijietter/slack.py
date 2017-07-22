@@ -1,6 +1,7 @@
 import requests
 import json
 import os
+from nijietter import get_module_logger
 
 
 class SlackApp:
