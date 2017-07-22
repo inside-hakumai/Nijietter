@@ -7,6 +7,7 @@ import pprint
 from nijietter import Storing
 from nijietter import get_module_logger
 from nijietter.model import ensure_original_from_retweet
+from nijietter.slack import SlackApp
 
 
 def on_sigint(_signal, _frame):
@@ -28,6 +29,7 @@ class MyStreamListener(tweepy.StreamListener):
     def __init__(self):
         tweepy.StreamListener.__init__(self)
         self.storing = Storing(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'store'))
+        self.slack_bot = SlackApp()
 
     def on_status(self, status):
         # storing.save(status)
@@ -35,7 +37,10 @@ class MyStreamListener(tweepy.StreamListener):
         # pp.pprint(vars(status))
         tweet_status = ensure_original_from_retweet(status._json)
         self.storing.log_status_detail(tweet_status)
-        self.storing.save_if_has_media(tweet_status)
+        save_paths = self.storing.save_if_has_media(tweet_status)
+        if len(save_paths) != 0:
+            self.slack_bot.send_image(save_paths, tweet_status['text'])
+
         '''
         if 'extended_entities' in status._json:
             # pp.pprint(status._json['extended_entities']['media'])

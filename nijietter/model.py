@@ -33,15 +33,21 @@ class Storing:
         
     def save(self, status):
         statuses_media = status['extended_entities']['media']
+        paths = []
 
         for status_media in statuses_media:
             if not self.image_already_saved(status_media):
                 path = self.save_image(status_media)
                 self.link_sym_user(path, status)
+                paths.append(path)
+
+        return paths
 
     def save_if_has_media(self, status):
         if 'extended_entities' in status:
-            self.save(status)
+            return self.save(status)
+        else:
+            return []
 
     def image_already_saved(self, status_media):
         media_id = status_media['id_str']
