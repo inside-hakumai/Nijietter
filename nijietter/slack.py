@@ -21,7 +21,7 @@ class SlackApp:
         requests.post(self.webhook_url, payload)
 
     def upload_file(self, file_path, up_filename=None, comment=None):
-        self.logger.raise_hier_level()
+        self.logger.raise_hier_level('debug')
         self.logger.debug('START - SlackApp.upload_file')
         self.logger.debug('File path: {}'.format(file_path), )
         file = {'file': (file_path, open(file_path, 'rb'), 'jpg')}
@@ -34,7 +34,7 @@ class SlackApp:
         res = requests.post(self.file_upload_url, files=file, data=payload)
         # print(res.text)
         self.logger.debug('END - SlackApp.upload_file')
-        self.logger.drop_hier_level()
+        self.logger.drop_hier_level('debug')
 
     def set_active(self):
         set_active_url = "https://slack.com/api/users.setActive"

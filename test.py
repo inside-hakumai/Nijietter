@@ -39,7 +39,7 @@ class MyStreamListener(tweepy.StreamListener):
         # storing.save(status)
         # print(status.text)
         # pp.pprint(vars(status))
-        logger.raise_hier_level()
+        logger.raise_hier_level('debug')
         logger.debug('START - MyStreamListerner.on_status')
         tweet_status = ensure_original_from_retweet(status._json)
         self.storing.log_status_detail(tweet_status)
@@ -47,8 +47,8 @@ class MyStreamListener(tweepy.StreamListener):
         if len(save_paths) != 0:
             self.slack_bot.send_image(save_paths, tweet_status['text'])
 
-        logger.drop_hier_level()
         logger.debug('END - MyStreamListerner.on_status')
+        logger.drop_hier_level('debug')
         '''
         if 'extended_entities' in status._json:
             # pp.pprint(status._json['extended_entities']['media'])
