@@ -60,11 +60,10 @@ class MyStreamListener(tweepy.StreamListener):
             '''
             
 
-consumer_key = "A53HhpKOptdAwfdKBGU4zdmkH"
-consumer_secret = "Fcx9oHf3nbjwfuxKUKlLytJchn42YTRZK12FVSbslIfRwyladZ"
-
-access_token = "1481911626-WpsUFfWqidCDt5PIXLjZImJiPUVOVbmvRHOipCS"
-access_token_secret = "SAV6I6U5yPqJwsiHfx2UEpe3sFx3xxsImCA7WfunuxYij"
+consumer_key = os.getenv('NIJIETTER_TWITTER_CONSUMER_KEY', None)
+consumer_secret = os.getenv('NIJIETTER_TWITTER_CONSUMER_SECRET', None)
+access_token = os.getenv('NIJIETTER_TWITTER_ACCESS_TOKEN', None)
+access_token_secret = os.getenv('NIJIETTER_TWITTER_ACCESS_TOKEN_SECRET', None)
 
 # storing = Storing()
 

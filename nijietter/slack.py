@@ -11,7 +11,7 @@ class SlackApp:
     def __init__(self):
         self.webhook_url = 'https://hooks.slack.com/services/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'
         self.file_upload_url = 'https://slack.com/api/files.upload'
-        self.oauth_access_token = 'xoxb-215634588192-SonH3JT14kV9A99KajpnmIfU'
+        self.oauth_access_token = os.getenv('NIJIETTER_SLACK_OAUTH_ACCESS_TOKEN', None)
         self.chanel_id = 'C6C6BQCKD'
         self.logger = get_module_logger()
 
