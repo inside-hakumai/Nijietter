@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import requests
 import json
 import os
@@ -46,9 +48,18 @@ class SlackApp:
         res = requests.post(auth_test_url, data={"token": self.oauth_access_token})
         # print(res.text)
 
-    def send_image(self, save_paths, tweet_text):
+    def upload_image(self, save_paths, tweet_status):
+        tweet_text = tweet_status['text']
+        user_name = tweet_status['user']['name']
+        user_scr_name = tweet_status['user']['screen_name']
+        post_time = datetime.strptime(tweet_status['created_at'], '%a %b %d %H:%M:%S %z %Y')\
+            .strftime('%Y-%m-%d %H:%M:%S')
+
+        comment = 'Post by {}(@{}) at {}\n-------------------------------------------\n{}'\
+            .format(user_name, user_scr_name, post_time, tweet_text)
+
         for save_path in save_paths:
-            self.upload_file(save_path, comment=tweet_text)
+            self.upload_file(save_path, comment=comment)
 
 
 if __name__ == '__main__':

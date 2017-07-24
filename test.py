@@ -45,7 +45,7 @@ class MyStreamListener(tweepy.StreamListener):
         self.storing.log_status_detail(tweet_status)
         save_paths = self.storing.save_if_has_media(tweet_status)
         if len(save_paths) != 0:
-            self.slack_bot.send_image(save_paths, tweet_status['text'])
+            self.slack_bot.upload_image(save_paths, tweet_status)
 
         logger.debug('END - MyStreamListerner.on_status')
         logger.drop_hier_level('debug')
