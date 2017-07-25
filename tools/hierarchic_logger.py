@@ -88,7 +88,7 @@ class HierarchicLogger(logging.Logger):
             super().info(message, *args, **kwargs)
 
     def debug(self, msg, *args, **kwargs):
-        msg_lines = msg.split('\n')
+        msg_lines = str(msg).split('\n')
         for line in msg_lines:
             message = self.join_border_to_msg(self.hier_level, line)
             super().debug(message, *args, **kwargs)
