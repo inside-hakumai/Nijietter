@@ -34,9 +34,18 @@ class SlackApp:
             "initial_comment": comment if comment else ""
         }
         res = requests.post(self.file_upload_url, files=file, data=payload)
-        # print(res.text)
+        res_json = res.json()
+        self.logger.debug('Response:  {}'.format(res.text))
+        self.logger.debug('File ID:   {}'.format(res_json['file']['id']))
+        self.logger.debug('TimeStamp: {}'.format(res_json['file']['timestamp']))
+        self.logger.debug('Title:     {}'.format(res_json['file']['title']))
         self.logger.debug('END - SlackApp.upload_file')
         self.logger.drop_hier_level('debug')
+
+        if res_json['ok']:
+            return res_json['file']['id'], res_json['file']['timestamp'], res_json['file']['title']
+        else:
+            return None, None, None
 
     def set_active(self):
         set_active_url = "https://slack.com/api/users.setActive"
@@ -58,8 +67,12 @@ class SlackApp:
         comment = 'Post by {}(@{}) at {}\n-------------------------------------------\n{}'\
             .format(user_name, user_scr_name, post_time, tweet_text)
 
+        ts_title_tuples = []
         for save_path in save_paths:
-            self.upload_file(save_path, comment=comment)
+            file_id, ts, title = self.upload_file(save_path, comment=comment)
+            ts_title_tuples.append((file_id, ts, title))
+
+        return ts_title_tuples
 
 
 if __name__ == '__main__':

@@ -8,6 +8,7 @@ from nijietter import Storing
 from nijietter import get_module_logger
 from nijietter.model import ensure_original_from_retweet
 from nijietter.slack import SlackApp
+from nijietter.sqlite import Database
 from tools.hierarchic_logger import HierarchicLogger
 import logging
 
@@ -19,12 +20,14 @@ def on_sigint(_signal, _frame):
         if not myStream.running:
             logger.debug('Stream connection is closed')
 
+    db.close()
     sys.exit(0)
 
 
 pp = pprint.PrettyPrinter(indent=4)
 logging.setLoggerClass(HierarchicLogger)
 logger = get_module_logger()
+db = Database('./store/data.db')
 
 
 # override tweepy.StreamListener to add logic to on_status
@@ -45,7 +48,9 @@ class MyStreamListener(tweepy.StreamListener):
         self.storing.log_status_detail(tweet_status)
         save_paths = self.storing.save_if_has_media(tweet_status)
         if len(save_paths) != 0:
-            self.slack_bot.upload_image(save_paths, tweet_status)
+            ts_title_tuples = self.slack_bot.upload_image(save_paths, tweet_status)
+            for file_id, ts, title in ts_title_tuples:
+                db.add_entry(file_id, ts, title, tweet_status['user']['screen_name'])
 
         logger.debug('END - MyStreamListerner.on_status')
         logger.drop_hier_level('debug')
