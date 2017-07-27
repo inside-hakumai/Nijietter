@@ -1,0 +1,25 @@
+{
+  "name": "nijietter",
+  "version": "0.0.1",
+  "description": "nijietter",
+  "main": "main.js",
+  "dependencies": {
+    "botkit": "^0.5.5",
+    "dotenv": "^4.0.0",
+    "twitter": "^1.7.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/inside-hakumai/Nijietter.git"
+  },
+  "author": "inside-hakumai",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/inside-hakumai/Nijietter/issues"
+  },
+  "homepage": "https://github.com/inside-hakumai/Nijietter#readme"
+}
