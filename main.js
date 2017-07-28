@@ -3,9 +3,12 @@ let TwitterStream = require(__dirname + '/lib/twitter.js');
 let Logger = require(__dirname + '/lib/logger.js');
 let Store = require(__dirname + '/lib/file_store.js');
 let SlackBot = require(__dirname + '/lib/slack_bot.js');
+let Database = require(__dirname + '/lib/sqlite.js');
 
 let logger = new Logger('main');
 let store = new Store(__dirname + '/store/');
+let db = new Database(__dirname + '/store/data.db');
+
 let bot = new SlackBot();
 
 logger.debug('Start twitter streaming');
@@ -24,7 +27,10 @@ new TwitterStream().stream(function(status){
          logger.debug(`[Media: ${tw_media.media_id_str}]`);
          logger.debug(`File URL: ${tw_media.media_url}`);
          store.save_image(tw_media.media_id_str, tw_media.media_url, function(filePath){
-            bot.upload_image(filePath, status, tw_media);
+            bot.upload_image(filePath, status, tw_media, function(mediaID, slackFileID, slackPostTs, userID, tweetText){
+               db.insert_image(mediaID, slackFileID, slackPostTs, userID);
+               db.insert_tweet(mediaID, tweetText);
+            });
          });
          logger.dropHierLevel('debug');
       });
