@@ -10,6 +10,17 @@ let store = new Store(__dirname + '/store/');
 let db = new Database(__dirname + '/store/data.db');
 
 let bot = new SlackBot();
+bot.addEventOnReaction(function(_bot, event){
+   let is_nijie;
+   if (event['reaction'] === '+1') {
+      is_nijie = true;
+   } else if (event['reaction'] === '-1') {
+      is_nijie = false;
+   } else {
+      is_nijie = null;
+   }
+   db.updateNijieBool(event['item']['file'], is_nijie);
+});
 
 logger.debug('Start twitter streaming');
 new TwitterStream().stream(function(status){
