@@ -1,8 +1,10 @@
 "use strict";
 let TwitterStream = require(__dirname + '/lib/twitter.js');
 let Logger = require(__dirname + '/lib/logger.js');
+let Store = require(__dirname + '/lib/file_store.js');
 
-let logger = new Logger();
+let logger = new Logger('main');
+let store = new Store(__dirname + '/store/');
 
 logger.debug('Start twitter streaming');
 new TwitterStream().stream(function(status){
@@ -18,6 +20,10 @@ new TwitterStream().stream(function(status){
       status.media.forEach(function(tw_media){
          logger.raiseHierLevel('debug');
          logger.debug(`[Media: ${tw_media.media_id_str}]`);
+         logger.debug(`File URL: ${tw_media.media_url}`);
+         store.save_image(tw_media.media_id_str, tw_media.media_url, function(){
+            // do nothing
+         });
          logger.dropHierLevel('debug');
       });
    } else {
