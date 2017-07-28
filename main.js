@@ -17,9 +17,14 @@ bot.addEventOnReaction(function(_bot, event){
    } else if (event['reaction'] === '-1') {
       is_nijie = false;
    } else {
-      is_nijie = null;
+      return;
    }
    db.updateNijieBool(event['item']['file'], is_nijie);
+});
+bot.addEventOnReactionRemoved(function(_bot, event){
+   if (event['reaction'] === '+1' || event['reaction'] === '-1'){
+      db.updateNijieBool(event['item']['file'], null);
+   }
 });
 
 logger.debug('Start twitter streaming');
