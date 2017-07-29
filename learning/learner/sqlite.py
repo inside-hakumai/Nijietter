@@ -11,7 +11,7 @@ class Database:
         self.cursor = None
         self.mecab = MeCab.Tagger('-d /usr/local/lib/mecab/dic/mecab-ipadic-neologd')
 
-    def get_all_words(self):
+    def get_all_word_appearance(self):
         self.open_cursor()
         words = []
         self.cursor.execute("SELECT * from nijie_bool")
