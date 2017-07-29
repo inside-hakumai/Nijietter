@@ -85,6 +85,35 @@ class Database:
 
         return data
 
+    def get_bool_user_tweet(self):
+        self.open_cursor()
+        tuples = []
+
+        self.cursor.execute("SELECT is_nijie, user_id, tweet_text FROM"
+                            "(SELECT is_nijie, user_id, tweet_text FROM image "
+                            "INNER JOIN nijie_bool ON nijie_bool.media_id = image.media_id "
+                            "INNER JOIN tweet ON tweet.media_id = image.media_id)"
+                            "WHERE is_nijie is NOT NULL")
+        data = self.cursor.fetchall()
+
+        for row in data:
+            tweet = re.sub(r'http(s)?://([\w-]+\.)+[\w-]+(/[-\w ./?%&=]*)?', '', row[2])
+
+            words = []
+            self.mecab.parse('')  # 文字列がGCされるのを防ぐ
+            node = self.mecab.parseToNode(tweet)
+            while node:
+                if node.feature.split(",")[0] == '名詞' or node.feature.split(",")[0] == '動詞':
+                    word = node.surface
+                    # print('{}'.format(word))
+                    words.append(word)
+                node = node.next
+            tuples.append([row[0], row[1], words])
+
+        self.close_cursor()
+
+        return tuples
+
     def open_cursor(self):
         self.cursor = self.conn.cursor()
 
