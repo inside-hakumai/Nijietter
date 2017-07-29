@@ -73,6 +73,19 @@ class Database:
 
         return tuples
 
+    def get_bool_and_user(self):
+        self.open_cursor()
+        tuples = []
+
+        self.cursor.execute("SELECT is_nijie, user_id FROM "
+                            "(SELECT user_id, is_nijie FROM image "
+                            "INNER JOIN nijie_bool ON nijie_bool.media_id = image.media_id) "
+                            "WHERE is_nijie is NOT NULL")
+        data = self.cursor.fetchall()
+        self.close_cursor()
+
+        return data
+
     def open_cursor(self):
         self.cursor = self.conn.cursor()
 
