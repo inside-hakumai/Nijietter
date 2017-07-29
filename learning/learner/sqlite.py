@@ -35,6 +35,18 @@ class Database:
 
         return words
 
+    def get_all_user_appearance(self):
+        self.open_cursor()
+        self.cursor.execute("SELECT user_id FROM "
+                            "(SELECT user_id, is_nijie FROM image "
+                            "INNER JOIN nijie_bool ON nijie_bool.media_id = image.media_id) "
+                            "WHERE is_nijie is NOT NULL")
+        data = self.cursor.fetchall()
+        users = list(map(lambda t: t[0], data))
+        self.close_cursor()
+
+        return users
+
     def get_bool_and_tweet(self):
         self.open_cursor()
         tuples = []
