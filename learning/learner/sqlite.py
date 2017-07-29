@@ -68,7 +68,6 @@ class Database:
                     words.append(word)
                 node = node.next
             tuples.append([row[0], words])
-        print(tuples)
         self.close_cursor()
 
         return tuples
