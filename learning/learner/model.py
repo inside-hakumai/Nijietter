@@ -10,12 +10,12 @@ from learner.sqlite import Database
 
 class Model:
     def __init__(self, db_path=None, threshold=2, loop=200):
-        self.word_dictionary = {}  # { token: index, ... }
-        self.word_index2word = []  # [token, token, token, ... ]
-        self.word_score = None  # [float, float, float ... ]
-        self.user_dictionary = {}  # { token: index, ... }
-        self.user_index2user = []  # [token, token, token, ... ]
-        self.user_score = None  # [float, float, float ... ]
+        self.word_dictionary = None  # np.array([token, index] [token, index], ... }
+        self.word_index2word = None  # np.array([token, token, token, ... ])
+        self.word_score = None       # np.array([float, float, float ... ])
+        self.user_dictionary = None  # np.array([token, index] [token, index], ... }
+        self.user_index2user = None  # np.array([token, token, token, ... ])
+        self.user_score = None       # np.array([float, float, float ... ])
 
         self.threshold = threshold
         self.word_count = []
@@ -59,17 +59,17 @@ class Model:
 
         index2word = words_unique
 
-        word_dictionary = {}
+        word_dictionary = []
         for i, w in enumerate(index2word):
-            word_dictionary[w] = i
+            word_dictionary.append([w, i])
 
         self.word_count = word_count
-        self.word_dictionary = word_dictionary
-        self.word_index2word = index2word
+        self.word_dictionary = np.array(word_dictionary)
+        self.word_index2word = np.array(index2word)
         
         write_json("word_count.json", self.word_count)
-        write_json("word_dict.json", self.word_dictionary)
-        write_json("index2word.json", self.word_index2word)
+        write_json("word_dict.json", self.word_dictionary.tolist())
+        write_json("index2word.json", self.word_index2word.tolist())
 
         # prepare user list
         users = db.get_all_user_appearance()
@@ -94,17 +94,17 @@ class Model:
 
         index2user = users_unique
 
-        user_dictionary = {}
+        user_dictionary = []
         for i, w in enumerate(index2user):
-            user_dictionary[w] = i
+            user_dictionary.append([w, i])
 
         self.user_count = user_count
-        self.user_dictionary = user_dictionary
-        self.user_index2user = index2user
+        self.user_dictionary = np.array(user_dictionary)
+        self.user_index2user = np.array(index2user)
 
         write_json("user_count.json", self.user_count)
-        write_json("user_dict.json", self.user_dictionary)
-        write_json("index2user.json", self.user_index2user)
+        write_json("user_dict.json", self.user_dictionary.tolist())
+        write_json("index2user.json", self.user_index2user.tolist())
 
     def initialize(self):
         db = Database()
@@ -125,7 +125,7 @@ class Model:
             word_num = len(words)
 
             if len(words) != 0:
-                indexes = map(lambda x: self.word_dictionary.get(x, None), words)
+                indexes = map(lambda x: arr_dict_get(x, self.word_dictionary), words)
                 indexes = [v for v in indexes if v is not None]
 
                 if is_nijie:
@@ -152,7 +152,7 @@ class Model:
                 continue
 
             user = user_tuple[1]
-            user_index = self.user_dictionary.get(user, None)
+            user_index = arr_dict_get(user, self.user_dictionary)
             if user_index is not None:
                 if is_nijie:
                     self.user_score[user_index] += 1
@@ -204,15 +204,19 @@ class Model:
         # prediction = self.estimator.predict(scores_train)
         # print(np.array(label_train) == prediction)
 
-    def save(self, save_path='model.pkl'):
-        joblib.dump(self.estimator, save_path)
-        print('Saved model to {}'.format(os.path.abspath(save_path)))
+    def save(self, model_save_path='model.pkl', arrays_save_path='values.npz'):
+        joblib.dump(self.estimator, model_save_path)
+        print('Saved model to {}'.format(os.path.abspath(model_save_path)))
+        np.savez(arrays_save_path,
+                 self.word_dictionary, self.word_index2word, self.word_score,
+                 self.user_dictionary, self.user_index2user, self.user_score)
+        print('Saved values to {}'.format(os.path.abspath(arrays_save_path)))
 
     def predict(self, data):
         return self.estimator.predict(data)
 
     def get_score_from_username(self, username):
-        index = self.user_dictionary.get(username, None)
+        index = arr_dict_get(username, self.user_dictionary)
         if index is not None:
             return self.user_score[index]
         else:
@@ -222,7 +226,7 @@ class Model:
         score_sum = 0.0
         words_num = len(words)
         if words_num != 0:
-            indexes = map(lambda x: self.word_dictionary.get(x, None), words)
+            indexes = map(lambda x: arr_dict_get(x, self.word_dictionary), words)
             for index in indexes:
                 if index is not None:
                     score_sum += self.word_score[index]
@@ -231,6 +235,15 @@ class Model:
             avg_score = 0
 
         return avg_score
+
+
+def arr_dict_get(key, array):
+    result = np.column_stack(np.where(array == key))
+    for row in result:
+        if row[1] == 0:
+            return row[0]
+
+    return None
 
 
 def write_json(filename, data):
