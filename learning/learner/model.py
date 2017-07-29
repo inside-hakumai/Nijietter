@@ -1,10 +1,10 @@
 import codecs
 import json
 import os
-import random
 from collections import Counter
 import numpy as np
-
+from sklearn.svm import SVC
+from sklearn.externals import joblib
 from learner.sqlite import Database
 
 
@@ -22,11 +22,13 @@ class Model:
         self.user_count = []
         self.loop = loop
 
+        self.estimator = None
+
         if db_path is not None:
             self.prepare_vocabulary()
             self.initialize()
-            # self.train()
-            # self.save()
+            self.train()
+            self.save()
 
     def prepare_vocabulary(self):
         db = Database()
@@ -164,54 +166,71 @@ class Model:
 
     def train(self):
         db = Database()
-        data = db.get_bool_and_tweet()
+        data = db.get_bool_user_tweet()
+
+        label_train = []
+        user_score_train = []
+        tweet_score_train = []
+
+        for label, username, words in data:
+            user_score = self.get_score_from_username(username)
+            if user_score is not None:
+                tweet_score = self.get_words_score_avg(words)
+                label_train.append(label)
+                user_score_train.append(user_score)
+                tweet_score_train.append(tweet_score)
+            else:
+                continue
+
+        scores_train = []
+        for i in range(len(user_score_train)):
+            scores_train.append([user_score_train[i], tweet_score_train[i]])
+
+        train_data = []
+        for i in range(len(label_train)):
+            train_data.append([label_train[i], scores_train[i]])
+
+        write_json('train_data.json', train_data)
 
         print("Start training...")
 
-        for loop_count in range(self.loop):
-            iter = loop_count + 1
-            print("Iteration: " + str(iter))
-            learn_rate = 1 / iter
-            random.shuffle(data)
+        self.estimator = SVC(C=1.0)
+        self.estimator.fit(scores_train, label_train)
 
-            for tuple in data:
-                if tuple[0] == 1:
-                    is_nijie = True
-                elif tuple[0] == 0:
-                    is_nijie = False
-                else:
-                    continue
+        print("Training finished.")
 
-                words = tuple[1]
-                if len(words) != 0:
-                    indexes = map(lambda x: self.word_dictionary.get(x, None), words)
-                    if is_nijie:
-                        for index in indexes:
-                            if index is not None:
-                                self.word_score[index] = self.word_score[index] * (1 + learn_rate)
-                    else:
-                        for index in indexes:
-                            if index is not None:
-                                self.word_score[index] = self.word_score[index] * (1 - learn_rate)
+        # print(self.estimator.get_params())
 
-        print("Training is finished.")
+        # prediction = self.estimator.predict(scores_train)
+        # print(np.array(label_train) == prediction)
 
-    def save(self):
-        print('Saving model...')
-        scores = {}
-        for i, word in enumerate(self.word_index2word):
-            scores[word] = self.word_score[i].item()
-        write_json('result_score.json', scores)
+    def save(self, save_path='model.pkl'):
+        joblib.dump(self.estimator, save_path)
+        print('Saved model to {}'.format(os.path.abspath(save_path)))
 
-        # f = h5py.File('model.hdf5', 'w')
-        # f.create_dataset('dictionary', data=self.dictionary)
-        # f.create_dataset('wordScore', data=self.wordScore)
-        # f.create_dataset('data', data=np.asarray(self.data))
-        # f.create_dataset('count', data=self.count)
-        # f.create_dataset('index2word', data=np.asarray(self.index2word))
-        # f.flush()
-        # f.close()
-        print('Saved!')
+    def predict(self, data):
+        return self.estimator.predict(data)
+
+    def get_score_from_username(self, username):
+        index = self.user_dictionary.get(username, None)
+        if index is not None:
+            return self.user_score[index]
+        else:
+            return None
+
+    def get_words_score_avg(self, words):
+        score_sum = 0.0
+        words_num = len(words)
+        if words_num != 0:
+            indexes = map(lambda x: self.word_dictionary.get(x, None), words)
+            for index in indexes:
+                if index is not None:
+                    score_sum += self.word_score[index]
+            avg_score = score_sum / float(words_num)
+        else:
+            avg_score = 0
+
+        return avg_score
 
 
 def write_json(filename, data):
