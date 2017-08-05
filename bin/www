@@ -1,0 +1,202 @@
+#!/usr/bin/env node
+"use strict";
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../app');
+var sessionMiddleware = app.session;
+var debug = require('debug')('tmp:server');
+var http = require('http');
+var child_process = require('child_process');
+var path = require('path');
+
+
+/**
+ * Variables
+ */
+
+var server;
+var io;
+const MAX_CONNECTION_NUM = 5;
+var connecting_processes = {}
+
+/**
+ * Launch estimator as child process.
+ */
+
+let estimator_process = child_process.fork('app_estimator.js');
+estimator_process.on('exit', (code, signal) => {
+   throw new Error(`Estimator process was finished with code ${code} and signal ${signal}`);
+});
+
+/**
+ * Handle message from estimator process
+ */
+estimator_process.on('message', (m) => {
+   switch(m){
+      case 'ready':
+         /**
+          * Get port from environment and store in Express.
+          */
+
+         var port = normalizePort(process.env.PORT || '3000');
+         app.set('port', port);
+
+         /**
+          * Create HTTP server.
+          */
+
+         server = http.createServer(app);
+
+         /**
+          * Socket.io initialization
+          */
+
+         io = require('socket.io')(server);
+
+         /**
+          * Listen on provided port, on all network interfaces.
+          */
+
+         server.listen(port);
+         server.on('error', onError);
+         server.on('listening', onListening);
+
+         /**
+          * Socket.io configuration
+          */
+
+         io.use((socket, next) => {
+            // console.log(socket.request);
+            // let cookie = require('cookie').parse(socket.request.headers.cookie);
+            // cookie = require('cookie-parser').signedCookies(cookie, 'secret');
+            // let session_id = cookie['connect.sid'];
+            // console.log(cookie);
+            // sessionMiddleware(socket.request, socket.request.res, next);
+            // if (socket.request.headers.cookie) return next();
+            sessionMiddleware(socket.request, socket.request.res, next);
+         });
+
+         io.use((socket, next) => {
+            if (socket.request.session.passport !== undefined){
+               next();
+            } else {
+               next(new Error('Authentication error'));
+            }
+         });
+
+         // 接続確立時の処理
+         io.on('connection', function (socket) {
+            // この中でデータのやり取りを行う
+            // console.log(socket);
+            // console.log('connected');
+            let session_data = socket.request.session;
+            // console.log(session_data.passport.user.id);
+            add_child_process(
+               socket.id,
+               session_data.passport.user.id,
+               session_data.passport.user.twitter_token,
+               session_data.passport.user.twitter_token_secret
+            );
+            socket.emit('news', {hello: 'world'});
+            socket.on('my other event', function (data) {
+               console.log(data);
+            });
+         });
+
+
+         break;
+      default:
+         throw new Error(`Unrecognized message type: ${m.toString()}`);
+   }
+});
+
+function add_child_process(socket_id, twitter_id, token, token_secret) {
+   if (Object.keys(connecting_processes).length < MAX_CONNECTION_NUM) {
+      let new_process = child_process.fork('app_twstream.js');
+      new_process.on('message', (m) => {
+         switch(m['type']) {
+            case 'ready':
+               new_process.send({
+                  id          : twitter_id,
+                  token       : token,
+                  token_secret: token_secret
+               });
+               break;
+            case 'file_path':
+               let relative_path = path.relative(__dirname, m['data'])
+               io.to(socket_id).emit('new_image', relative_path);
+               break;
+            default:
+               throw new Error(`Unrecognized message type: ${m.toString()}`);
+         }
+      });
+      connecting_processes[socket_id] = new_process;
+      return new_process;
+   } else {
+      throw Error('Maximum process number reached');
+   }
+}
+
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+   var port = parseInt(val, 10);
+
+   if (isNaN(port)) {
+      // named pipe
+      return val;
+   }
+
+   if (port >= 0) {
+      // port number
+      return port;
+   }
+
+   return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+   if (error.syscall !== 'listen') {
+      throw error;
+   }
+
+   var bind = typeof port === 'string'
+      ? 'Pipe ' + port
+      : 'Port ' + port;
+
+   // handle specific listen errors with friendly messages
+   switch (error.code) {
+      case 'EACCES':
+         console.error(bind + ' requires elevated privileges');
+         process.exit(1);
+         break;
+      case 'EADDRINUSE':
+         console.error(bind + ' is already in use');
+         process.exit(1);
+         break;
+      default:
+         throw error;
+   }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+   var addr = server.address();
+   var bind = typeof addr === 'string'
+      ? 'pipe ' + addr
+      : 'port ' + addr.port;
+   debug('Listening on ' + bind);
+}
