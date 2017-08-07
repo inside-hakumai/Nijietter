@@ -1,6 +1,6 @@
 "use strict";
 
-import '../css/style.css';
+import '../css/style.scss';
 
 let $ = require('jquery');
 let Packery = require('packery');
