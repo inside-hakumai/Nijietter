@@ -40,6 +40,17 @@ body {
    line-height: 100px;
 }
 
+.grid {
+   margin: auto 10px;
+}
+
+.grid-item {
+   width: 150px;
+   float: left;
+}
+.grid-item img {
+   width: 100%;
+}
 
 a {
    color: #00B7FF;
