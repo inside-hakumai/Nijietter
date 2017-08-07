@@ -83,7 +83,7 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/store', express.static(path.join(__dirname, 'store')));
-app.use('/javascripts/minigrid.min.js', express.static(path.join(__dirname, 'node_modules', 'minigrid', 'dist', 'minigrid.min.js')));
+app.use('/javascripts/packery.js', express.static(path.join(__dirname, 'node_modules', 'packery', 'dist', 'packery.pkgd.js')));
 app.use(passport.initialize());
 app.use(passport.session());
 
