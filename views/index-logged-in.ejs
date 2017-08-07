@@ -9,17 +9,25 @@
     <title>にじえったー</title>
 </head>
 <body>
-<!--
-<div id="top">
-    <div class="title-area">
-        <p class="title">
-            <span class="title-main">にじえったー(仮)</span><br>
-            Twitterのタイムラインから二次元イラスト「っぽいもの」を抽出します<br>
-            <span class="long-margin"><a href="./auth"><img src="/images/sign-in-with-twitter-gray.png"></a></span>
-        </p>
+<div class="nav">
+    <div class="nav-inner">
+        <div class="nav-status-view">
+            <div class="nav-status streaming">
+                <img src="/images/ic_autorenew_black.png">
+                <span>Streaming...</span>
+            </div>
+        </div>
+        <div class="nav-user-view">
+            <div class="avatar-image-box"><img src="<%= profile_image_url %>"></div>
+            <div class="nav-dropdown">
+                <ul class="dropdown-items">
+                    <li><a href="https://twitter.com/<%= screen_name %>" target="_blank">プロフィール</a></li>
+                    <li><a>ログアウト</a></li>
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
--->
 <div class="grid"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/javascripts/bundle-active.js"></script>

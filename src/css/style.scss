@@ -22,6 +22,95 @@ html {
          background: #FFFFFF;
          border-bottom: 1px solid rgba(0,0,0,0.25);
          height: 46px;
+
+         div.nav-inner {
+            max-width: 1190px;
+            height: 100%;
+            margin: auto;
+            text-align: center;
+
+            div.nav-status-view {
+               float: left;
+
+               div.nav-status {
+
+                  img {
+                     float: left;
+                     width: 35px;
+                     height: 35px;
+                     margin-top: 6px;
+                     animation: spin 6s ease-in-out infinite;
+                     opacity: 0.5;
+                  }
+
+                  span {
+                     float: left;
+                     display: block;
+                     font-size: 16px;
+                     line-height: 1;
+                     margin-top: 15px;
+                     margin-left: 5px;
+                  }
+               }
+            }
+
+            div.nav-user-view {
+               float: right;
+               display: flex;
+               justify-content: center;
+               flex-direction: column;
+               height: 100%;
+               position: relative;
+
+               div.avatar-image-box {
+                  height: 34px;
+
+                  img {
+                     width: 32px;
+                     height: 32px;
+                     border-radius: 50px;
+                     border: 1px solid #ccd6dd;
+                  }
+
+                  &:hover + div.nav-dropdown {
+                     display: block;
+                  }
+               }
+
+               div.nav-dropdown {
+                  position: absolute;
+                  top: 40px;
+                  right: 0px;
+                  width: 200px;
+                  display: none;
+                  background: white;
+                  z-index: 1;
+                  border: 1px solid #ccd6dd;
+                  border-radius: 4px;
+
+                  ul.dropdown-items {
+                     list-style: none;
+                     padding-left: 0;
+                     margin: 0;
+
+                     li {
+                        text-align: left;
+                        line-height: 36px;
+                        text-indent: 20px;
+                        border-bottom: 1px solid #E6ECF0;
+
+                        li:last-child {
+                           border-bottom: none;
+                        }
+                     }
+                  }
+
+                  &:hover {
+                     display: block;
+                  }
+               }
+            }
+         }
       }
 
       .grid {
@@ -62,4 +151,9 @@ html {
          }
       }
    }
+}
+
+@keyframes spin {
+   0% {transform: rotate(0deg);}
+   100% {transform: rotate(360deg);}
 }
