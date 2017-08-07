@@ -1,0 +1,65 @@
+p {
+   display: block;
+}
+
+a {
+   color: #00B7FF;
+}
+
+html {
+   width: 100%;
+   height: 100%;
+
+   body {
+      font: 14px "Rounded Mplus 1c", "Lucida Grande", Helvetica, Arial, sans-serif;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #E6ECF0;
+
+      div.nav {
+         background: #FFFFFF;
+         border-bottom: 1px solid rgba(0,0,0,0.25);
+         height: 46px;
+      }
+
+      .grid {
+         margin: auto 10px;
+
+         .grid-item {
+            width: 150px;
+            float: left;
+
+            img {
+               width: 100%;
+            }
+         }
+      }
+
+      #top {
+         width: 100%;
+         height: 100%;
+         margin: 0;
+
+         .title-area {
+            display: flex;
+            align-items: center;
+            height: 100%;
+
+            .title {
+               flex: 1;
+               text-align: center;
+
+               .title-main {
+                  font-weight: bold;
+                  font-size: 4vw;
+               }
+               .long-margin {
+                  line-height: 100px;
+               }
+            }
+         }
+      }
+   }
+}
