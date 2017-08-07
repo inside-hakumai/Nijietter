@@ -95,52 +95,77 @@ estimator_process.on('message', (m) => {
 
          // 接続確立時の処理
          io.on('connection', function (socket) {
-            // この中でデータのやり取りを行う
-            // console.log(socket);
-            // console.log('connected');
+            let session_id = socket.request.sessionID;
             let session_data = socket.request.session;
-            // console.log(session_data.passport.user.id);
-            add_child_process(
+            logger.debug(`[${session_id}] Establish new connection`);
+            get_child_process(
+               session_id,
                socket.id,
                session_data.passport.user.id,
                session_data.passport.user.twitter_token,
                session_data.passport.user.twitter_token_secret
             );
-            socket.emit('news', {hello: 'world'});
+            // socket.emit('news', {hello: 'world'});
+            /*
             socket.on('my other event', function (data) {
                console.log(data);
             });
+            */
          });
-
-
          break;
+
       default:
          throw new Error(`Unrecognized message type: ${m.toString()}`);
    }
 });
 
-function add_child_process(socket_id, twitter_id, token, token_secret) {
+function get_child_process(session_id, socket_id, twitter_id, token, token_secret) {
    if (Object.keys(connecting_processes).length < MAX_CONNECTION_NUM) {
-      let new_process = child_process.fork('app_twstream.js');
-      new_process.on('message', (m) => {
-         switch(m['type']) {
-            case 'ready':
-               new_process.send({
-                  id          : twitter_id,
-                  token       : token,
-                  token_secret: token_secret
-               });
-               break;
-            case 'file_path':
-               let relative_path = path.relative(__dirname, m['data'])
-               io.to(socket_id).emit('new_image', relative_path);
-               break;
-            default:
-               throw new Error(`Unrecognized message type: ${m.toString()}`);
-         }
-      });
-      connecting_processes[socket_id] = new_process;
-      return new_process;
+
+      if (connecting_processes[session_id]) {
+         logger.debug(`[${session_id}] Reconnect to existing streaming process`);
+         connecting_processes[session_id].send({
+            type: 'update_socket',
+            data: {
+               'socket_id': socket_id
+            }
+         });
+         return connecting_processes[session_id];
+      } else {
+         logger.debug(`[${session_id}] Launch new streaming process`);
+         let new_process = child_process.fork('app_twstream.js');
+         new_process.on('message', (m) => {
+            switch (m['type']) {
+               case 'ready':
+                  new_process.send({
+                     type: 'initialize',
+                     data: {
+                        socket_id: socket_id,
+                        id: twitter_id,
+                        token: token,
+                        token_secret: token_secret
+                     }
+                  });
+                  break;
+               case 'file_path':
+                  let relative_path = path.relative(__dirname, m['data']['path']);
+                  logger.debug(`[${session_id}] Receive new image: ${relative_path}`);
+                  io.to(m['data']['socket_id']).emit('new_image', relative_path);
+                  break;
+               case 'restore':
+                  let relative_paths = m['data']['images'].map((file_path) => {
+                     return path.relative(__dirname, file_path);
+                  });
+                  logger.debug(`[${session_id}] Restore images: ${relative_paths.toString()}`);
+                  io.to(m['data']['socket_id']).emit('restore', relative_paths);
+                  break;
+               default:
+                  throw new Error(`Unrecognized message type: ${m.toString()}`);
+            }
+         });
+         connecting_processes[session_id] = new_process;
+         return new_process;
+      }
    } else {
       throw Error('Maximum process number reached');
    }
