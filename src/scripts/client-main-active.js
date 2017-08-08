@@ -28,30 +28,30 @@ socket.on('news', function (data) {
    socket.emit('my other event', { my: 'data' });
 });
 
-socket.on('new_image', function(path) {
+socket.on('new_image', function(data) {
    let _image = new Image();
-   _image.src = path;
+   _image.src = data['path'];
    _image.onload = () => {
       let new_elem = document.createElement('div');
       new_elem.className = 'grid-item';
-      new_elem.innerHTML = `<img src="${path.toString()}">`;
+      new_elem.innerHTML = `<a href="${data['url'].toString()}" target="_blank"><img src="${data['path'].toString()}"></a>`;
       $('.grid').prepend(new_elem);
       pckry.prepended(new_elem);
-      console.log(path);
+      console.log(data['path']);
       pckry.layout();
    };
 });
 
-socket.on('restore', function(paths) {
-   console.log(paths);
+socket.on('restore', function(data) {
+   console.log(data);
 
-   for (let i = 0 ; i < paths.length; i++){
+   for (let i = 0 ; i < data.length; i++){
       let _image = new Image();
-      _image.src = paths[i];
+      _image.src = data[i]['path'];
       _image.onload = () => {
          let new_elem = document.createElement('div');
          new_elem.className = 'grid-item';
-         new_elem.innerHTML = `<img src="${paths[i].toString()}">`;
+         new_elem.innerHTML = `<a href="${data[i]['url'].toString()}" target="_blank"><img src="${data[i]['path'].toString()}"></a>`;
          $('.grid').prepend(new_elem);
          pckry.prepended(new_elem);
          pckry.layout();

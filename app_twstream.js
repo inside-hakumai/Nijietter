@@ -36,12 +36,14 @@ process.on('message', (data) => {
                   logger.debug(`File URL: ${tw_media.media_url}`);
                   logger.dropHierLevel('debug');
                   store.save_image(tw_media.media_id_str, tw_media.media_url).then(function (result) {
-                     update_stock_images(result['file_path']);
+                     let url = `https://twitter.com/${status.user_screen_name}/status/${status.tweet_id}`;
+                     update_stock_images(result['file_path'], url);
                      process.send({
                         type: 'file_path',
                         data: {
                            socket_id: socket_id,
-                           path: result['file_path']
+                           path: result['file_path'],
+                           url: url
                         }
                      });
                   });
@@ -72,8 +74,11 @@ process.on('message', (data) => {
    }
 });
 
-function update_stock_images(file_path){
-   stock_images.unshift(file_path);
+function update_stock_images(file_path, url){
+   stock_images.unshift({
+      path: file_path,
+      url: url
+   });
    if (stock_images.length > maxium_image_num) {
       stock_images.pop();
    }

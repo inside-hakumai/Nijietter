@@ -150,11 +150,17 @@ function get_child_process(session_id, socket_id, twitter_id, token, token_secre
                case 'file_path':
                   let relative_path = path.relative(__dirname, m['data']['path']);
                   logger.debug(`[${session_id}] Receive new image: ${relative_path}`);
-                  io.to(m['data']['socket_id']).emit('new_image', relative_path);
+                  io.to(m['data']['socket_id']).emit('new_image', {
+                     path: relative_path,
+                     url: m['data']['url']
+                  });
                   break;
                case 'restore':
-                  let relative_paths = m['data']['images'].map((file_path) => {
-                     return path.relative(__dirname, file_path);
+                  let relative_paths = m['data']['images'].map((data) => {
+                     return {
+                        path: path.relative(__dirname, data['path']),
+                        url: data['url']
+                     };
                   });
                   logger.debug(`[${session_id}] Restore images: ${relative_paths.toString()}`);
                   io.to(m['data']['socket_id']).emit('restore', relative_paths);
