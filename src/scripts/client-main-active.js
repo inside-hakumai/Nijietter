@@ -4,12 +4,21 @@ import '../css/style.scss';
 
 let $ = require('jquery');
 let Packery = require('packery');
+const IMAGE_WIDTH = 150;
 
 let container = document.querySelector('.grid');
 let pckry = new Packery(container, {
    itemSelector: '.grid-item',
    gutter: 10,
    transitionDuration: '0.3s'
+});
+
+$(() => {
+   $(window).on('load resize', () => {
+      let window_width = $(window).width();
+      let row_image_num = Math.floor((window_width + 10) / (IMAGE_WIDTH + 10));
+      $('main').width(row_image_num * (IMAGE_WIDTH + 10) - 10);
+   });
 });
 
 let socket = io.connect("http://localhost:3000");

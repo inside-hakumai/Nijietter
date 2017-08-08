@@ -1,3 +1,5 @@
+$image_width: 150px;
+
 p {
    display: block;
 }
@@ -113,15 +115,18 @@ html {
          }
       }
 
-      .grid {
-         margin: auto 10px;
+      main {
+         margin: 10px auto;
 
-         .grid-item {
-            width: 150px;
-            float: left;
+         .grid {
 
-            img {
-               width: 100%;
+            .grid-item {
+               width: $image_width;
+               float: left;
+
+               img {
+                  width: 100%;
+               }
             }
          }
       }
