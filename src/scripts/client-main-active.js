@@ -14,10 +14,21 @@ let pckry = new Packery(container, {
 });
 
 $(() => {
-   $(window).on('load resize', () => {
-      let window_width = $(window).width();
-      let row_image_num = Math.floor((window_width + 10) / (IMAGE_WIDTH + 10));
-      $('main').width(row_image_num * (IMAGE_WIDTH + 10) - 10);
+   $(window).on('resize', () => {
+      adjust_grid_margin();
+   });
+   adjust_grid_margin();
+
+   $('input[name="false-visible"]').change(function(){
+      if ($(this).is(':checked')) {
+         console.debug('active: false-visible');
+         $('.grid').addClass('false-visible');
+         pckry.layout();
+      } else {
+         $('.grid').removeClass('false-visible');
+         console.debug('inactive: false-visible');
+         pckry.layout();
+      }
    });
 });
 
@@ -74,4 +85,10 @@ socket.on('restore', function(data) {
       };
    }
 });
+
+function adjust_grid_margin(){
+   let window_width = $(window).width();
+   let row_image_num = Math.floor((window_width + 10) / (IMAGE_WIDTH + 10));
+   $('main').width(row_image_num * (IMAGE_WIDTH + 10) - 10);
+}
 

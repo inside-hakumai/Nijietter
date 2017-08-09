@@ -1,4 +1,5 @@
 $image_width: 150px;
+$nav_bar_height: 46px;
 
 p {
    display: block;
@@ -23,7 +24,7 @@ html {
       div.nav {
          background: #FFFFFF;
          border-bottom: 1px solid rgba(0,0,0,0.25);
-         height: 46px;
+         height: $nav_bar_height;
 
          div.nav-inner {
             max-width: 1190px;
@@ -58,57 +59,94 @@ html {
 
             div.nav-user-view {
                float: right;
-               display: flex;
-               justify-content: center;
-               flex-direction: column;
-               height: 100%;
-               position: relative;
 
-               div.avatar-image-box {
-                  height: 34px;
+               ul.nav-items {
+                  list-style: none;
+                  margin: 0;
 
-                  img {
-                     width: 32px;
-                     height: 32px;
-                     border-radius: 50px;
-                     border: 1px solid #ccd6dd;
-                  }
+                  li.nav-item {
+                     float: left;
+                     display: flex;
+                     justify-content: center;
+                     flex-direction: column;
+                     height: $nav_bar_height;
+                     position: relative;
+                     padding-left: 15px;
 
-                  &:hover + div.nav-dropdown {
-                     display: block;
-                  }
-               }
+                     div.avatar-image-box {
+                        height: 34px;
 
-               div.nav-dropdown {
-                  position: absolute;
-                  top: 40px;
-                  right: 0px;
-                  width: 200px;
-                  display: none;
-                  background: white;
-                  z-index: 1;
-                  border: 1px solid #ccd6dd;
-                  border-radius: 4px;
+                        img {
+                           width: 32px;
+                           height: 32px;
+                           border-radius: 50px;
+                           border: 1px solid #ccd6dd;
+                        }
 
-                  ul.dropdown-items {
-                     list-style: none;
-                     padding-left: 0;
-                     margin: 0;
-
-                     li {
-                        text-align: left;
-                        line-height: 36px;
-                        text-indent: 20px;
-                        border-bottom: 1px solid #E6ECF0;
-
-                        li:last-child {
-                           border-bottom: none;
+                        &:hover + div.nav-dropdown {
+                           display: block;
                         }
                      }
-                  }
 
-                  &:hover {
-                     display: block;
+                     div.nav-dropdown {
+                        position: absolute;
+                        top: 40px;
+                        right: 0px;
+                        width: 200px;
+                        display: none;
+                        background: white;
+                        z-index: 1;
+                        border: 1px solid #ccd6dd;
+                        border-radius: 4px;
+
+                        ul.dropdown-items {
+                           list-style: none;
+                           padding-left: 0;
+                           margin: 0;
+
+                           li {
+                              text-align: left;
+                              line-height: 36px;
+                              text-indent: 20px;
+                              border-bottom: 1px solid #E6ECF0;
+
+                              li:last-child {
+                                 border-bottom: none;
+                              }
+                           }
+                        }
+
+                        &:hover {
+                           display: block;
+                        }
+                     }
+
+                     div.setting-image-box {
+                        height: 34px;
+
+                        img {
+                           width: 34px;
+                           height: 34px;
+                           opacity: 0.5;
+                        }
+
+                        &:hover + div.nav-dropdown {
+                           display: block;
+                        }
+
+                        &+ div.nav-dropdown {
+                           width: 400px;
+
+                           span {
+                              color: #14171a;
+                           }
+
+                           input {
+                              float: right;
+                              margin: 12px;
+                           }
+                        }
+                     }
                   }
                }
             }
@@ -129,10 +167,17 @@ html {
                   display: block;
                }
 
+               &.nijie-false {
+                  display: none;
+               }
             }
 
-            &.false-visible .grid-item.nijie-false img {
-               opacity: 0.2;
+            &.false-visible .grid-item.nijie-false {
+               display: block;
+
+               img {
+                  opacity: 0.2;
+               }
             }
          }
       }

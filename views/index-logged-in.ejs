@@ -18,18 +18,30 @@
             </div>
         </div>
         <div class="nav-user-view">
-            <div class="avatar-image-box"><img src="<%= profile_image_url %>"></div>
-            <div class="nav-dropdown">
-                <ul class="dropdown-items">
-                    <li><a href="https://twitter.com/<%= screen_name %>" target="_blank">プロフィール</a></li>
-                    <li><a>ログアウト</a></li>
-                </ul>
-            </div>
+            <ul class="nav-items">
+                <li class="nav-item">
+                    <div class="avatar-image-box"><img src="<%= profile_image_url %>"></div>
+                    <div class="nav-dropdown">
+                        <ul class="dropdown-items">
+                            <li><a href="https://twitter.com/<%= screen_name %>" target="_blank">プロフィール</a></li>
+                            <li><a>ログアウト</a></li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <div class="setting-image-box"><img src="images/ic_settings_black.svg"></div>
+                    <div class="nav-dropdown">
+                        <ul class="dropdown-items">
+                            <li><span>二次元イラストではない画像も表示する</span><input type="checkbox" name="false-visible"></li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
         </div>
     </div>
 </div>
 <main>
-    <div class="grid false-visible"></div>
+    <div class="grid"></div>
 </main>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/javascripts/bundle-active.js"></script>
