@@ -86,6 +86,14 @@ socket.on('restore', function(data) {
    }
 });
 
+socket.on('connect', function(_err) {
+   $('.nav-status-view').addClass('connect').removeClass('error');
+});
+
+socket.on('connect_error', function(_err) {
+   $('.nav-status-view').addClass('error').removeClass('connect');
+});
+
 function adjust_grid_margin(){
    let window_width = $(window).width();
    let row_image_num = Math.floor((window_width + 10) / (IMAGE_WIDTH + 10));

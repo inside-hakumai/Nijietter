@@ -36,13 +36,13 @@ html {
                float: left;
 
                div.nav-status {
+                  display: none;
 
                   img {
                      float: left;
                      width: 35px;
                      height: 35px;
                      margin-top: 6px;
-                     animation: spin 6s ease-in-out infinite;
                      opacity: 0.5;
                   }
 
@@ -54,6 +54,18 @@ html {
                      margin-top: 15px;
                      margin-left: 5px;
                   }
+               }
+
+               &.connect div.nav-status.streaming {
+                  display: block;
+
+                  img {
+                     animation: spin 6s ease-in-out infinite;
+                  }
+               }
+
+               &.error div.nav-status.error {
+                  display: block;
                }
             }
 
