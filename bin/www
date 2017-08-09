@@ -30,7 +30,7 @@ var image_stack = {};
  */
 
 logger.debug('Waiting for estimator to ready...');
-let estimator_process = child_process.fork('app_estimator.js');
+let estimator_process = child_process.fork('./lib/app/app_estimator.js');
 estimator_process.on('exit', (code, signal) => {
    throw new Error(`Estimator process was finished with code ${code} and signal ${signal}`);
 });
@@ -39,7 +39,7 @@ estimator_process.on('exit', (code, signal) => {
 /**
  * Launch Database handling module as child process.
  */
-let db_process = child_process.fork('app_sqlite.js');
+let db_process = child_process.fork('./lib/app/app_sqlite.js');
 db_process.on('exit', (code, signal) => {
    throw new Error(`Database process was finished with code ${code} and signal ${signal}`);
 });
@@ -190,7 +190,7 @@ function get_child_process(session_id, socket_id, twitter_id, token, token_secre
          return connecting_processes[session_id];
       } else {
          logger.debug(`[${session_id}] Launch new streaming process`);
-         let new_process = child_process.fork('app_twstream.js');
+         let new_process = child_process.fork('./lib/app/app_twstream.js');
          new_process.on('message', (m) => {
             switch (m['type']) {
                case 'ready':
