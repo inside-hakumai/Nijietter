@@ -23,6 +23,7 @@ var io;
 const MAX_CONNECTION_NUM = 5;
 var connecting_processes = {}
 let logger = new Logger('app_main');
+var image_stack = {};
 
 /**
  * Launch estimator as child process.
@@ -38,7 +39,7 @@ estimator_process.on('exit', (code, signal) => {
  * Handle message from estimator process
  */
 estimator_process.on('message', (m) => {
-   switch(m){
+   switch(m['type']){
       case 'ready':
          logger.debug('Estimator gets ready.');
 
@@ -114,8 +115,33 @@ estimator_process.on('message', (m) => {
          });
          break;
 
+      case 'prediction_result':
+         logger.debug(`Received prediction result: socket_id=${m['data']['socket_id']}, media_id=${m['data']['socket_id']}`);
+
+         let prediction_data = m['data'];
+         let socket_id = prediction_data['socket_id'];
+         let media_id = prediction_data['media_id'];
+         let prediction = prediction_data['result'];
+
+         let data = stack_pop(socket_id, media_id);
+
+         data['process'].send({
+            type: 'sync_prediction',
+            data: {
+               media_id: media_id,
+               prediction: prediction
+            }
+         });
+
+         io.to(socket_id).emit('new_image', {
+            path: data['path'],
+            url: data['url'],
+            prediction: prediction
+         });
+         break;
+
       default:
-         throw new Error(`Unrecognized message type: ${m.toString()}`);
+         throw new Error(`Unrecognized message type: ${JSON.stringify(m)}`);
    }
 });
 
@@ -143,27 +169,37 @@ function get_child_process(session_id, socket_id, twitter_id, token, token_secre
                         socket_id: socket_id,
                         id: twitter_id,
                         token: token,
-                        token_secret: token_secret
+                        token_secret: token_secret,
                      }
                   });
                   break;
-               case 'file_path':
-                  let relative_path = path.relative(__dirname, m['data']['path']);
+               case 'send_image':
+                  let data = m['data'];
+                  let relative_path = path.relative(__dirname, data['path']);
                   logger.debug(`[${session_id}] Receive new image: ${relative_path}`);
-                  io.to(m['data']['socket_id']).emit('new_image', {
-                     path: relative_path,
-                     url: m['data']['url']
+                  stack_push(new_process, data['socket_id'], data['media_id'], relative_path, data['url']);
+
+                  estimator_process.send({
+                     type: 'prediction_request',
+                     data: {
+                        socket_id: data['socket_id'],
+                        media_id: data['media_id'],
+                        user: data['user'],
+                        text: data['text'],
+                     }
                   });
                   break;
+
                case 'restore':
-                  let relative_paths = m['data']['images'].map((data) => {
+                  let stack = m['data']['images'].map((data) => {
                      return {
                         path: path.relative(__dirname, data['path']),
-                        url: data['url']
+                        url: data['url'],
+                        prediction: data['prediction'],
                      };
                   });
-                  logger.debug(`[${session_id}] Restore images: ${relative_paths.toString()}`);
-                  io.to(m['data']['socket_id']).emit('restore', relative_paths);
+                  logger.debug(`[${session_id}] Restore images: ${stack.toString()}`);
+                  io.to(m['data']['socket_id']).emit('restore', stack);
                   break;
                default:
                   throw new Error(`Unrecognized message type: ${m.toString()}`);
@@ -177,6 +213,28 @@ function get_child_process(session_id, socket_id, twitter_id, token, token_secre
    }
 }
 
+function stack_push(process, socket_id, media_id, path, url) {
+   if (!image_stack[socket_id]) {
+      image_stack[socket_id] = {};
+   }
+   image_stack[socket_id][media_id] = {
+      process: process,
+      path: path,
+      url: url
+   };
+   // console.log(JSON.stringify(image_stack));
+}
+
+function stack_pop(socket_id, media_id) {
+   if (!image_stack[socket_id] || !image_stack[socket_id][media_id]){
+      throw new Error(`No such data in image stack: socket_id=${socket_id}, media_id=${media_id}`);
+   } else {
+      let return_data = Object.assign({}, image_stack[socket_id][media_id]);
+      delete image_stack[socket_id][media_id];
+      // console.log(JSON.stringify(image_stack));
+      return return_data;
+   }
+}
 
 /**
  * Normalize a port into a number, string, or false.

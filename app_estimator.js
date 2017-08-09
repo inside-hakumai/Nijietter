@@ -36,6 +36,7 @@ let prepare_bot = new Promise((resolve) => {
 }).catch((error) => { throw error; });
 */
 
+logger.debug('Start to prepare learning model...');
 let prepare_leaner = new Promise((resolve, reject) => {
    let time_limit = setTimeout( () => {
       reject(new Error('Preparing estimator timed out'));
@@ -48,11 +49,42 @@ let prepare_leaner = new Promise((resolve, reject) => {
 }).catch((error) => { throw error; });
 
 prepare_leaner.then((l_model) => {
-   process.send("ready");
+   logger.debug('Learning model is ready');
+
+   process.send({
+      type: "ready"
+   });
 
    process.on('message', (m) => {
-      console.log(m);
-   })
+      switch (m['type']) {
+         case 'prediction_request':
+            logger.debug(`New prediction request received from socket: ${m['data']['socket_id']}`);
+
+            let data = m['data'];
+            let socket_id = data['socket_id'];
+            let media_id = data['media_id'];
+            let user = data['user'];
+            let text = data['text'];
+
+            l_model.predict(user, text).then((prediction) => {
+               logger.debug(`Return prediction to app: socket_id=${socket_id}, media_id=${media_id}, prediction=${prediction}`);
+               process.send({
+                  type: 'prediction_result',
+                  data: {
+                     socket_id: socket_id,
+                     media_id: media_id,
+                     result: prediction,
+                  }
+               });
+            });
+            break;
+
+         default:
+            console.log(m);
+            break;
+
+      }
+   });
 
    /*
    logger.debug('Start twitter streaming');

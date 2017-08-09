@@ -8,6 +8,7 @@ let store = new Store(__dirname + '/store/');
 var socket_id;
 var maxium_image_num = 20;
 var stock_images = [];
+var image_id_head;
 
 process.send({ type: 'ready' });
 
@@ -37,15 +38,29 @@ process.on('message', (data) => {
                   logger.dropHierLevel('debug');
                   store.save_image(tw_media.media_id_str, tw_media.media_url).then(function (result) {
                      let url = `https://twitter.com/${status.user_screen_name}/status/${status.tweet_id}`;
-                     update_stock_images(result['file_path'], url);
+                     update_stock_images(tw_media.media_id_str, result['file_path'], url);
+
                      process.send({
-                        type: 'file_path',
+                        type: 'send_image',
                         data: {
                            socket_id: socket_id,
+                           media_id: tw_media.media_id_str,
                            path: result['file_path'],
-                           url: url
+                           url: url,
+                           user: status.user_screen_name,
+                           text: status.tweet_text
                         }
                      });
+                     /*
+                     estimator.send({
+                        type: 'predict',
+                        data: {
+                           media_id: tw_media.media_id_str,
+                           user: status.user_screen_name,
+                           text: status.tweet_text
+                        }
+                     });
+                     */
                   });
                });
             } else {
@@ -68,16 +83,32 @@ process.on('message', (data) => {
          });
          break;
 
+      case 'sync_prediction':
+         update_prediction(data['data']['media_id'], data['data']['prediction']);
+         break;
+
       default:
          throw new Error(`Unrecognized message type: ${m.toString()}`);
          break;
    }
 });
 
-function update_stock_images(file_path, url){
+function update_prediction(media_id, prediction) {
+   for (let i = 0; i < stock_images.length; i++) {
+      if (stock_images[i]['id'] === media_id){
+         stock_images[i]['prediction'] = prediction;
+         return true;
+      }
+   }
+   return false;
+}
+
+function update_stock_images(media_id, file_path, url){
    stock_images.unshift({
+      id: media_id,
       path: file_path,
-      url: url
+      url: url,
+      prediction: undefined
    });
    if (stock_images.length > maxium_image_num) {
       stock_images.pop();
