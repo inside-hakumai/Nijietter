@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="format-detection" content="telephone=no,address=no,email=no">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!-- <link rel="icon" href="/icon/favicon.ico"> -->
+    <link href="https://fonts.googleapis.com/earlyaccess/roundedmplus1c.css" rel="stylesheet" />
+    <title>にじえったー(Admin)</title>
+</head>
+<body>
+<div class="nav">
+    <div class="nav-inner">
+        <div class="nav-status-view">
+            <div class="nav-status streaming">
+                <img src="/images/ic_autorenew_black.png">
+                <span>Streaming...</span>
+            </div>
+            <div class="nav-status error">
+                <img src="/images/ic_error_black.svg">
+                <span>Broken connection</span>
+            </div>
+        </div>
+        <div class="nav-user-view">
+            <ul class="nav-items">
+                <li class="nav-item">
+                    <div class="avatar-image-box"><img src="<%= profile_image_url %>"></div>
+                    <div class="nav-dropdown">
+                        <ul class="dropdown-items">
+                            <li><a href="https://twitter.com/<%= screen_name %>" target="_blank">プロフィール</a></li>
+                            <li><a id="link-logout">ログアウト</a></li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <div class="setting-image-box"><img src="images/ic_settings_black.svg"></div>
+                    <div class="nav-dropdown">
+                        <ul class="dropdown-items">
+                            <li><span>二次元イラストではない画像も表示する</span><input type="checkbox" name="false-visible"></li>
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+<main>
+    <div class="grid"></div>
+</main>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/javascripts/bundle-active-admin.js"></script>
+</body>
+</html>

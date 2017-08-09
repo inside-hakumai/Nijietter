@@ -1,14 +1,15 @@
 "use strict";
 let TwitterStream = require(__dirname + '/lib/twitter.js');
-let Logger =        require(__dirname + '/lib/logger.js');
-let Store =         require(__dirname + '/lib/file_store.js');
-let SlackBot =      require(__dirname + '/lib/slack_bot.js');
-let Database =      require(__dirname + '/lib/sqlite.js');
-let LModel =        require(__dirname + '/lib/learning.js');
+let Logger        = require(__dirname + '/lib/logger.js');
+let Store         = require(__dirname + '/lib/file_store.js');
+let SlackBot      = require(__dirname + '/lib/slack_bot.js');
+let Database      = require(__dirname + '/lib/sqlite.js');
+let LModel        = require(__dirname + '/lib/learning.js');
+let EventEmittor  = require('events');
 
-let logger = new Logger('main');
-let store  = new Store(__dirname + '/store/');
-let db     = new Database(__dirname + '/store/data.db');
+let logger        = new Logger('main');
+let store         = new Store(__dirname + '/store/');
+let db            = new Database(__dirname + '/store/data.db');
 
 process.on('unhandledRejection', console.dir);
 

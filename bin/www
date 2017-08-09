@@ -1,0 +1,329 @@
+#!/usr/bin/env node
+"use strict";
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../app');
+var sessionMiddleware = app.session;
+var debug = require('debug')('tmp:server');
+var http = require('http');
+var child_process = require('child_process');
+var path = require('path');
+let Logger = require('../lib/logger.js');
+
+
+/**
+ * Variables
+ */
+
+var server;
+var io;
+const MAX_CONNECTION_NUM = 5;
+var connecting_processes = {}
+let logger = new Logger('app_main');
+var image_stack = {};
+
+/**
+ * Launch estimator as child process.
+ */
+
+logger.debug('Waiting for estimator to ready...');
+let estimator_process = child_process.fork('app_estimator.js');
+estimator_process.on('exit', (code, signal) => {
+   throw new Error(`Estimator process was finished with code ${code} and signal ${signal}`);
+});
+
+
+/**
+ * Launch Database handling module as child process.
+ */
+let db_process = child_process.fork('app_sqlite.js');
+db_process.on('exit', (code, signal) => {
+   throw new Error(`Database process was finished with code ${code} and signal ${signal}`);
+});
+
+
+
+/**
+ * Handle message from estimator process
+ */
+estimator_process.on('message', (m) => {
+   switch(m['type']){
+      case 'ready':
+         logger.debug('Estimator gets ready.');
+
+         /**
+          * Get port from environment and store in Express.
+          */
+
+         var port = normalizePort(process.env.PORT || '3000');
+         app.set('port', port);
+
+         /**
+          * Create HTTP server.
+          */
+
+         server = http.createServer(app);
+
+         /**
+          * Socket.io initialization
+          */
+
+         io = require('socket.io')(server);
+
+         /**
+          * Listen on provided port, on all network interfaces.
+          */
+
+         server.listen(port);
+         server.on('error', onError);
+         server.on('listening', onListening);
+         logger.debug(`Launch web server with port ${port}`);
+
+         /**
+          * Socket.io configuration
+          */
+
+         io.use((socket, next) => {
+            // console.log(socket.request);
+            // let cookie = require('cookie').parse(socket.request.headers.cookie);
+            // cookie = require('cookie-parser').signedCookies(cookie, 'secret');
+            // let session_id = cookie['connect.sid'];
+            // console.log(cookie);
+            // sessionMiddleware(socket.request, socket.request.res, next);
+            // if (socket.request.headers.cookie) return next();
+            sessionMiddleware(socket.request, socket.request.res, next);
+         });
+
+         io.use((socket, next) => {
+            if (socket.request.session.passport !== undefined){
+               next();
+            } else {
+               next(new Error('Authentication error'));
+            }
+         });
+
+         // 接続確立時の処理
+         io.on('connection', function (socket) {
+            let socket_id = socket.conn.id;
+            let session_id = socket.request.sessionID;
+            let session_data = socket.request.session;
+            logger.debug(`[${session_id}] Establish new connection`);
+            let streaming_process = get_child_process(
+               session_id,
+               socket.id,
+               session_data.passport.user.id,
+               session_data.passport.user.twitter_token,
+               session_data.passport.user.twitter_token_secret
+            );
+            // socket.emit('news', {hello: 'world'});
+            /*
+            socket.on('my other event', function (data) {
+               console.log(data);
+            });
+            */
+
+            socket.on('logout', () => {
+               streaming_process.kill('SIGINT');
+               socket.request.session.destroy();
+               logger.debug('[$session_id] Session is closed');
+               io.to(socket_id).emit('session_broken');
+            });
+
+            socket.on('image_bool', (data) => {
+               db_process.send({
+                  type: 'update_bool',
+                  data: {
+                     media_id: data['media_id'],
+                     bool: data['bool'],
+                  }
+               });
+            });
+         });
+
+         break;
+
+      case 'prediction_result':
+         logger.debug(`Received prediction result: socket_id=${m['data']['socket_id']}, media_id=${m['data']['socket_id']}`);
+
+         let prediction_data = m['data'];
+         let socket_id = prediction_data['socket_id'];
+         let media_id = prediction_data['media_id'];
+         let prediction = prediction_data['result'];
+
+         let data = stack_pop(socket_id, media_id);
+
+         data['process'].send({
+            type: 'sync_prediction',
+            data: {
+               media_id: media_id,
+               prediction: prediction
+            }
+         });
+
+         io.to(socket_id).emit('new_image', {
+            media_id: media_id,
+            path: data['path'],
+            url: data['url'],
+            prediction: prediction
+         });
+         break;
+
+      default:
+         throw new Error(`Unrecognized message type: ${JSON.stringify(m)}`);
+   }
+});
+
+function get_child_process(session_id, socket_id, twitter_id, token, token_secret) {
+   if (Object.keys(connecting_processes).length < MAX_CONNECTION_NUM) {
+
+      if (connecting_processes[session_id]) {
+         logger.debug(`[${session_id}] Reconnect to existing streaming process`);
+         connecting_processes[session_id].send({
+            type: 'update_socket',
+            data: {
+               'socket_id': socket_id
+            }
+         });
+         return connecting_processes[session_id];
+      } else {
+         logger.debug(`[${session_id}] Launch new streaming process`);
+         let new_process = child_process.fork('app_twstream.js');
+         new_process.on('message', (m) => {
+            switch (m['type']) {
+               case 'ready':
+                  new_process.send({
+                     type: 'initialize',
+                     data: {
+                        socket_id: socket_id,
+                        id: twitter_id,
+                        token: token,
+                        token_secret: token_secret,
+                     }
+                  });
+                  break;
+               case 'send_image':
+                  let data = m['data'];
+                  let relative_path = path.relative(__dirname, data['path']);
+                  logger.debug(`[${session_id}] Receive new image: ${relative_path}`);
+                  stack_push(new_process, data['socket_id'], data['media_id'], relative_path, data['url']);
+
+                  estimator_process.send({
+                     type: 'prediction_request',
+                     data: {
+                        socket_id: data['socket_id'],
+                        media_id: data['media_id'],
+                        user: data['user'],
+                        text: data['text'],
+                     }
+                  });
+                  break;
+
+               case 'restore':
+                  let stack = m['data']['images'].map((data) => {
+                     return {
+                        media_id: data['media_id'],
+                        path: path.relative(__dirname, data['path']),
+                        url: data['url'],
+                        prediction: data['prediction'],
+                     };
+                  });
+                  logger.debug(`[${session_id}] Restore images: ${stack.toString()}`);
+                  io.to(m['data']['socket_id']).emit('restore', stack);
+                  break;
+               default:
+                  throw new Error(`Unrecognized message type: ${m.toString()}`);
+            }
+         });
+         connecting_processes[session_id] = new_process;
+         return new_process;
+      }
+   } else {
+      throw Error('Maximum process number reached');
+   }
+}
+
+function stack_push(process, socket_id, media_id, path, url) {
+   if (!image_stack[socket_id]) {
+      image_stack[socket_id] = {};
+   }
+   image_stack[socket_id][media_id] = {
+      process: process,
+      path: path,
+      url: url
+   };
+   // console.log(JSON.stringify(image_stack));
+}
+
+function stack_pop(socket_id, media_id) {
+   if (!image_stack[socket_id] || !image_stack[socket_id][media_id]){
+      throw new Error(`No such data in image stack: socket_id=${socket_id}, media_id=${media_id}`);
+   } else {
+      let return_data = Object.assign({}, image_stack[socket_id][media_id]);
+      delete image_stack[socket_id][media_id];
+      // console.log(JSON.stringify(image_stack));
+      return return_data;
+   }
+}
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+   var port = parseInt(val, 10);
+
+   if (isNaN(port)) {
+      // named pipe
+      return val;
+   }
+
+   if (port >= 0) {
+      // port number
+      return port;
+   }
+
+   return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+   if (error.syscall !== 'listen') {
+      throw error;
+   }
+
+   var bind = typeof port === 'string'
+      ? 'Pipe ' + port
+      : 'Port ' + port;
+
+   // handle specific listen errors with friendly messages
+   switch (error.code) {
+      case 'EACCES':
+         console.error(bind + ' requires elevated privileges');
+         process.exit(1);
+         break;
+      case 'EADDRINUSE':
+         console.error(bind + ' is already in use');
+         process.exit(1);
+         break;
+      default:
+         throw error;
+   }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+   var addr = server.address();
+   var bind = typeof addr === 'string'
+      ? 'pipe ' + addr
+      : 'port ' + addr.port;
+   debug('Listening on ' + bind);
+}
