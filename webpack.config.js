@@ -1,6 +1,7 @@
 module.exports = {
    // メインとなるJavaScriptファイル（エントリーポイント）
    entry: {
+      'active-admin': './src/scripts/client-main-active-admin.js',
       'active': './src/scripts/client-main-active.js',
       'inactive': './src/scripts/client-main-inactive.js'
    },
