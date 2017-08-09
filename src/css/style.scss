@@ -126,7 +126,13 @@ html {
 
                img {
                   width: 100%;
+                  display: block;
                }
+
+            }
+
+            &.false-visible .grid-item.nijie-false img {
+               opacity: 0.2;
             }
          }
       }

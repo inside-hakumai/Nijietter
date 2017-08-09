@@ -29,11 +29,19 @@ socket.on('news', function (data) {
 });
 
 socket.on('new_image', function(data) {
+   let image_class;
+   if (data['prediction'] === 1) {
+      image_class = 'nijie-true';
+   } else if (data['prediction'] === 0) {
+      image_class = 'nijie-false';
+   } else {
+      throw new Error(`Invalid prediction data: ${data['prediction']}`);
+   }
    let _image = new Image();
    _image.src = data['path'];
    _image.onload = () => {
       let new_elem = document.createElement('div');
-      new_elem.className = 'grid-item';
+      new_elem.className = 'grid-item ' + image_class;
       new_elem.innerHTML = `<a href="${data['url'].toString()}" target="_blank"><img src="${data['path'].toString()}"></a>`;
       $('.grid').prepend(new_elem);
       pckry.prepended(new_elem);
@@ -46,11 +54,19 @@ socket.on('restore', function(data) {
    console.log(data);
 
    for (let i = 0 ; i < data.length; i++){
+      let image_class;
+      if (data[i]['prediction'] === 1) {
+         image_class = 'nijie-true';
+      } else if (data[i]['prediction'] === 0) {
+         image_class = 'nijie-false';
+      } else {
+         throw new Error(`Invalid prediction data: ${data['prediction']}`);
+      }
       let _image = new Image();
       _image.src = data[i]['path'];
       _image.onload = () => {
          let new_elem = document.createElement('div');
-         new_elem.className = 'grid-item';
+         new_elem.className = 'grid-item ' + image_class;
          new_elem.innerHTML = `<a href="${data[i]['url'].toString()}" target="_blank"><img src="${data[i]['path'].toString()}"></a>`;
          $('.grid').prepend(new_elem);
          pckry.prepended(new_elem);
