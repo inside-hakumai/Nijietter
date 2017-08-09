@@ -30,12 +30,15 @@ $(() => {
          pckry.layout();
       }
    });
+
+   $('#link-logout').on('click', () => {
+      socket.emit('logout');
+   });
 });
 
 let socket = io.connect("http://localhost:3000");
 
 socket.on('news', function (data) {
-   console.log(data);
    socket.emit('my other event', { my: 'data' });
 });
 
@@ -92,6 +95,10 @@ socket.on('connect', function(_err) {
 
 socket.on('connect_error', function(_err) {
    $('.nav-status-view').addClass('error').removeClass('connect');
+});
+
+socket.on('session_broken', function() {
+   location.reload();
 });
 
 function adjust_grid_margin(){

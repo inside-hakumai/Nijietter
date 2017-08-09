@@ -96,10 +96,11 @@ estimator_process.on('message', (m) => {
 
          // 接続確立時の処理
          io.on('connection', function (socket) {
+            let socket_id = socket.conn.id;
             let session_id = socket.request.sessionID;
             let session_data = socket.request.session;
             logger.debug(`[${session_id}] Establish new connection`);
-            get_child_process(
+            let streaming_process = get_child_process(
                session_id,
                socket.id,
                session_data.passport.user.id,
@@ -112,7 +113,15 @@ estimator_process.on('message', (m) => {
                console.log(data);
             });
             */
+
+            socket.on('logout', () => {
+               streaming_process.kill('SIGINT');
+               socket.request.session.destroy();
+               logger.debug('[$session_id] Session is closed');
+               io.to(socket_id).emit('session_broken');
+            });
          });
+
          break;
 
       case 'prediction_result':

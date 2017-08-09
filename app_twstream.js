@@ -93,6 +93,11 @@ process.on('message', (data) => {
    }
 });
 
+process.once('SIGINT', () => {
+   logger.debug(`[${socket_id}] Streaming process is killed`);
+   process.exit(0);
+});
+
 function update_prediction(media_id, prediction) {
    for (let i = 0; i < stock_images.length; i++) {
       if (stock_images[i]['id'] === media_id){

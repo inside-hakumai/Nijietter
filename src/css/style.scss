@@ -125,6 +125,11 @@ html {
                               li:last-child {
                                  border-bottom: none;
                               }
+
+                              a#link-logout {
+                                 text-decoration: underline;
+                                 cursor: pointer;
+                              }
                            }
                         }
 
