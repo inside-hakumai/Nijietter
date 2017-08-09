@@ -2,6 +2,7 @@
 let TwitterStream = require(__dirname + '/lib/twitter.js');
 let Logger = require(__dirname + '/lib/logger.js');
 let Store = require(__dirname + '/lib/file_store.js');
+let Database = require(__dirname + '/lib/sqlite.js');
 
 let logger = new Logger('app_twstream');
 let store = new Store(__dirname + '/store/');
@@ -9,6 +10,7 @@ var socket_id;
 var maxium_image_num = 20;
 var stock_images = [];
 var image_id_head;
+let db = new Database(__dirname + '/store/data.db');
 
 process.send({ type: 'ready' });
 
@@ -37,6 +39,8 @@ process.on('message', (data) => {
                   logger.debug(`File URL: ${tw_media.media_url}`);
                   logger.dropHierLevel('debug');
                   store.save_image(tw_media.media_id_str, tw_media.media_url).then(function (result) {
+                     db.insert_image(tw_media.media_id_str, null, null, status.user_screen_name);
+                     db.insert_tweet(tw_media.media_id_str, status.tweet_text);
                      let url = `https://twitter.com/${status.user_screen_name}/status/${status.tweet_id}`;
                      update_stock_images(tw_media.media_id_str, result['file_path'], url);
 
@@ -100,7 +104,7 @@ process.once('SIGINT', () => {
 
 function update_prediction(media_id, prediction) {
    for (let i = 0; i < stock_images.length; i++) {
-      if (stock_images[i]['id'] === media_id){
+      if (stock_images[i]['media_id'] === media_id){
          stock_images[i]['prediction'] = prediction;
          return true;
       }
@@ -110,7 +114,7 @@ function update_prediction(media_id, prediction) {
 
 function update_stock_images(media_id, file_path, url){
    stock_images.unshift({
-      id: media_id,
+      media_id: media_id,
       path: file_path,
       url: url,
       prediction: undefined

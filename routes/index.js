@@ -5,7 +5,7 @@ let router = express.Router();
 /* GET home page. */
 router.get('/', function (req, res, next) {
    if (req.isAuthenticated()) {
-      console.log(req.user._json);
+      // console.log(req.user._json);
       if (req.user.id === process.env.APP_ADMIN_TWITTER_ACCOUNT) {
          res.render('index-logged-in-admin', {
             name: req.user._json.name,

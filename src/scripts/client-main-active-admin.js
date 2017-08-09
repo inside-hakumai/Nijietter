@@ -66,6 +66,7 @@ socket.on('new_image', function(data) {
 
 socket.on('restore', function(data) {
    console.log(data);
+   data.reverse();
 
    for (let i = 0 ; i < data.length; i++){
       let image_class;
@@ -81,7 +82,7 @@ socket.on('restore', function(data) {
       _image.onload = () => {
          let new_elem = document.createElement('div');
          new_elem.className = 'grid-item ' + image_class;
-         new_elem.innerHTML = `<a href="${data[i]['url'].toString()}" target="_blank"><img src="${data[i]['path'].toString()}"></a>`;
+         new_elem.innerHTML = `<a href="${data[i]['url'].toString()}" target="_blank"><img data-media-id="${data[i]['media_id']}" src="${data[i]['path'].toString()}"></a>`;
          $('.grid').prepend(new_elem);
          pckry.prepended(new_elem);
          pckry.layout();

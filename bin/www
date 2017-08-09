@@ -35,6 +35,17 @@ estimator_process.on('exit', (code, signal) => {
    throw new Error(`Estimator process was finished with code ${code} and signal ${signal}`);
 });
 
+
+/**
+ * Launch Database handling module as child process.
+ */
+let db_process = child_process.fork('app_sqlite.js');
+db_process.on('exit', (code, signal) => {
+   throw new Error(`Database process was finished with code ${code} and signal ${signal}`);
+});
+
+
+
 /**
  * Handle message from estimator process
  */
@@ -120,6 +131,16 @@ estimator_process.on('message', (m) => {
                logger.debug('[$session_id] Session is closed');
                io.to(socket_id).emit('session_broken');
             });
+
+            socket.on('image_bool', (data) => {
+               db_process.send({
+                  type: 'update_bool',
+                  data: {
+                     media_id: data['media_id'],
+                     bool: data['bool'],
+                  }
+               });
+            });
          });
 
          break;
@@ -143,6 +164,7 @@ estimator_process.on('message', (m) => {
          });
 
          io.to(socket_id).emit('new_image', {
+            media_id: media_id,
             path: data['path'],
             url: data['url'],
             prediction: prediction
@@ -202,6 +224,7 @@ function get_child_process(session_id, socket_id, twitter_id, token, token_secre
                case 'restore':
                   let stack = m['data']['images'].map((data) => {
                      return {
+                        media_id: data['media_id'],
                         path: path.relative(__dirname, data['path']),
                         url: data['url'],
                         prediction: data['prediction'],
