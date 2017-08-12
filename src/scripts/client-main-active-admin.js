@@ -1,5 +1,5 @@
 "use strict";
-
+require('dotenv').config();
 import '../css/style.scss';
 
 let $ = require('jquery');
@@ -36,7 +36,7 @@ $(() => {
    });
 });
 
-let socket = io.connect("http://localhost:3000");
+let socket = io.connect(process.env.DEPLOY_URL);
 
 socket.on('news', function (data) {
    socket.emit('my other event', { my: 'data' });

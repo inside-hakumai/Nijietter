@@ -64,7 +64,7 @@ passport.use(new TwitterStrategy(
    {
       consumerKey: process.env.TWITTER_CONSUMER_KEY,
       consumerSecret: process.env.TWITTER_CONSUMER_SECRET,
-      callbackURL: "http://localhost:3000/callback"
+      callbackURL: process.env.DEPLOY_URL + "/callback"
    }, function (token, tokenSecret, profile, done) {
 
       profile.twitter_token = token;
