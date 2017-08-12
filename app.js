@@ -1,46 +1,29 @@
 "use strict";
 require('dotenv').config();
-let express = require('express');
-let path = require('path');
-// let favicon = require('serve-favicon');
-let logger = require('morgan');
-let cookieParser = require('cookie-parser');
-let bodyParser = require('body-parser');
-let session = require('express-session');
-let passport = require('passport');
-let TwitterStrategy = require('passport-twitter').Strategy;
 
-let index = require('./routes/index');
-let users = require('./routes/users');
+const express         = require('express');
+const path            = require('path');
+// const favicon      = require('serve-favicon');
+const logger          = require('morgan');
+const cookieParser    = require('cookie-parser');
+const bodyParser      = require('body-parser');
+const session         = require('express-session');
+const passport        = require('passport');
+const TwitterStrategy = require('passport-twitter').Strategy;
 
-// let app = require('express')();
-let app = express();
-// let http = require('http');
-// let server = http.createServer(app);
-/*
-let server = http.createServer(function (req, res) {
-   res.writeHead(200, {'Content-Type':'text/html'});
-   res.end('server connected');
-});
-*/
-// let io = require('socket.io').listen(server);
-// let io = require('socket.io').listen(server);
-// app.io = io;
-// server.listen(3000);//8888番ポートで起動
+const index           = require('./routes/index');
+const app = express();
 
-/*
-io.use(function(socket, next){
-   console.log(socket);
-   next();
-});
-*/
-
-// view engine setup
+/**
+ * viewエンジンの設定
+ */
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-// session configuration
-let sessionMiddleware = session({
+/**
+ * セッションの設定
+ */
+const sessionMiddleware = session({
    secret: 'secret',
    resave: false,
    saveUninitialized: false,
@@ -53,11 +36,13 @@ let sessionMiddleware = session({
 app.session = sessionMiddleware;
 app.use(sessionMiddleware);
 
-// passport configuration
-passport.serializeUser( function(user, done) {
+/**
+ * passportの設定
+ */
+passport.serializeUser((user, done) => {
    done(null, user);
 });
-passport.deserializeUser( function(user, done) {
+passport.deserializeUser((user, done) => {
    done(null, user) ;
 });
 passport.use(new TwitterStrategy(
@@ -65,16 +50,16 @@ passport.use(new TwitterStrategy(
       consumerKey: process.env.TWITTER_CONSUMER_KEY,
       consumerSecret: process.env.TWITTER_CONSUMER_SECRET,
       callbackURL: process.env.DEPLOY_URL + "/callback"
-   }, function (token, tokenSecret, profile, done) {
-
+   }, (token, tokenSecret, profile, done) => {
       profile.twitter_token = token;
       profile.twitter_token_secret = tokenSecret;
-
       return done(null, profile);
-
    }
 ));
 
+/**
+ * その他各種設定
+ */
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
@@ -87,29 +72,28 @@ app.use('/javascripts/packery.js', express.static(path.join(__dirname, 'node_mod
 app.use(passport.initialize());
 app.use(passport.session());
 
+/**
+ * ルーティング設定
+ */
 app.use('/', index);
-// app.use('/users', users);
-
-app.get('/test', function (req, res) {
-   console.log(req);
-   console.log(res);
-   res.send('test');
-});
-
 app.get('/auth', passport.authenticate('twitter'));
 app.get('/callback', passport.authenticate('twitter', {
    successRedirect: '/', failureRedirect: '/'
 }));
 
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
-   let err = new Error('Not Found');
+/**
+ * 404エラーを送信
+ */
+app.use((req, res, next) => {
+   const err = new Error('Not Found');
    err.status = 404;
    next(err);
 });
 
-// error handler
-app.use(function (err, req, res, next) {
+/**
+ * エラーハンドリング
+ */
+app.use((err, req, res, next) => {
    // set locals, only providing error in development
    res.locals.message = err.message;
    res.locals.error = req.app.get('env') === 'development' ? err : {};
