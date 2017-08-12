@@ -1,11 +1,11 @@
 # にじえったー(Nijietter)
 **にじえったー** は、Twitterのタイムラインから **二次元イラスト「っぽいもの」** を抽出するツールです。
 
-##WebApp
+## WebApp
 以下のURLよりWebアプリケーションとして利用できます。  
 [http://nijietter.insidehakumai.net](http://nijietter.insidehakumai.net)
 
-##SlackTool
+## SlackTool
 タイムラインを監視し、イラストをSlackに投稿するツールとして利用できます。
 
 ### 動作環境
