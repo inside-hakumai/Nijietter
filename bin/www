@@ -70,7 +70,7 @@ estimator_process.on('message', (m) => {
             );
 
             socket.on('logout', () => {
-               streaming_process.kill('SIGINT');
+               streaming_process.kill();
                socket.request.session.destroy();
                logger.debug('[$session_id] Session is closed');
                io.to(socket_id).emit('session_broken');
@@ -203,6 +203,10 @@ class ChildStreamingProcess {
             'socket_id': socket_id
          }
       });
+   }
+
+   kill(){
+      this.process.kill('SIGINT');
    }
 }
 
