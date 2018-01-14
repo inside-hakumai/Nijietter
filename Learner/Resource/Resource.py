@@ -2,6 +2,7 @@
 
 import os
 import json
+from typing import List
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -26,7 +27,7 @@ class Resource:
     def get_twitter_access_token_secret(self) -> str:
         return self.config["twitter_access_token_secret"]
 
-    def get_collect_delay(self) -> int:
+    def get_collect_delay(self) -> List[int]:
         return self.config["collect_delay"]
 
     def get_collect_db_path(self) -> str:

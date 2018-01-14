@@ -11,6 +11,7 @@ from time import sleep
 import time
 import datetime
 from dateutil import tz
+from typing import List
 # from nijietter import Storing
 # from nijietter import get_module_logger
 # from nijietter.model import ensure_original_from_retweet
@@ -58,32 +59,49 @@ def ensure_original_from_retweet(status):
         return status
 
 
-def get_reaction_count(delay_second: int, status):
+def get_reaction_count(delay_second: List[int], status) -> List[dict]:
+
+    return_reaction_data = []
 
     post_id = status.id_str
     post_at = status.created_at.replace(tzinfo=from_zone).astimezone(to_zone)
     dt_now  = datetime.datetime.now(to_zone)
 
-    print(post_at)
-    print(dt_now)
-
+    delay_max_value = max(delay_second)
     sec_diff = (dt_now - post_at).total_seconds()
-    print(delay_second - sec_diff)
-    print(sec_diff)
-    if sec_diff < delay_second:
-        sleep(delay_second - sec_diff)
-        status = api.get_status(post_id)
 
-    return {
-        "count_at": dt_now,
-        "like_count": status.favorite_count,
-        "retweet_count": status.retweet_count
-    }
+    if sec_diff > delay_max_value:
+        print("[REAC] {id} -> like:{lc}, retweet:{rc} at {difsec}s ago ({time})".format(id=post_id, lc=status.favorite_count, rc=status.retweet_count, time=dt_now, difsec=(dt_now - post_at).total_seconds()))
+        return_reaction_data.append({
+            "count_at": dt_now,
+            "like_count": status.favorite_count,
+            "retweet_count": status.retweet_count
+        })
+    else:
+        delay_second.sort()
+        for dsec in delay_second:
+            dt_now  = datetime.datetime.now(to_zone)
+            sec_diff = (dt_now - post_at).total_seconds()
+            if sec_diff < dsec:
+                print("[REAC] Wait {sec} seconds for {id} ".format(sec=(dsec-sec_diff), id=post_id))
+                sleep(dsec - sec_diff)
+                status = api.get_status(post_id)
+                dt_now = datetime.datetime.now(to_zone)
+                print("[REAC] {id} -> like:{lc}, retweet:{rc} at {difsec}s ago ({time})".format(id=post_id, lc=status.favorite_count, rc=status.retweet_count, time=dt_now, difsec=(dt_now - post_at).total_seconds()))
+                return_reaction_data.append({
+                    "count_at": dt_now,
+                    "like_count": status.favorite_count,
+                    "retweet_count": status.retweet_count
+                })
+
+    return return_reaction_data
 
 
-def insert_reaction_counts(post_id: str, delay_second: int, status):
+def insert_reaction_counts(post_id: str, delay_second: List[int], status):
     reaction_data = get_reaction_count(delay_second, status)
-    reaction_db.insert_reaction(post_id, reaction_data["count_at"], reaction_data["like_count"], reaction_data["retweet_count"])
+
+    for rdata in reaction_data:
+        reaction_db.insert_reaction(post_id, rdata["count_at"], rdata["like_count"], rdata["retweet_count"])
 
 
 def has_extended_entities(status):
@@ -106,7 +124,7 @@ class MyStreamListener(tweepy.StreamListener):
         # storing.save(status)
         status = ensure_original_from_retweet(status)
 
-        pp.pprint(status)
+        # pp.pprint(status)
         # pp.pprint(vars(status))
         # logger.raise_hier_level('debug')
         # logger.debug('START - MyStreamListerner.on_status')
@@ -114,6 +132,7 @@ class MyStreamListener(tweepy.StreamListener):
         # save_paths = self.storing.save_if_has_media(tweet_status)
 
         if has_extended_entities(status):
+            print("[POST] {id} at {time} by @{name} - has media".format(id=status.id_str, name=status.user.name, time=status.created_at.replace(tzinfo=from_zone).astimezone(to_zone)))
             tweet_db.insert_tweet(status.id_str, status._json)
             # print(status.text)
             # print(status)
@@ -121,7 +140,7 @@ class MyStreamListener(tweepy.StreamListener):
             th_irc = threading.Thread(target=insert_reaction_counts, name="th_irc", args=(status.id_str, resource.get_collect_delay(), status))
             th_irc.start()
         else:
-            print("no media")
+            print("[POST] {id} at {time} by @{name} - no media".format(id=status.id_str, name=status.user.name, time=status.created_at.replace(tzinfo=from_zone).astimezone(to_zone)))
 
 
 if __name__ == "__main__":
