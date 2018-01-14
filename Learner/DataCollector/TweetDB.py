@@ -28,7 +28,7 @@ class TweetDB:
         with closing(sqlite3.connect(self.db_path)) as conn:
             c = conn.cursor()
 
-            sql = 'INSERT INTO tweets (id, json) values (?,?)'
+            sql = 'INSERT OR IGNORE INTO tweets (id, json) values (?,?)'
             user = (post_id, json.dumps(json_dict))
             c.execute(sql, user)
             conn.commit()
