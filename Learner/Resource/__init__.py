@@ -1,1 +1,1 @@
-from Resource.Resource import Resource
+from Learner.Resource.Resource import Resource

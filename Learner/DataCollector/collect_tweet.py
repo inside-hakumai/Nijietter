@@ -4,8 +4,8 @@ import os
 import sys
 import tweepy
 import pprint
-from Resource import Resource
-from TweetDB import TweetDB, ReactionDB
+from Learner.Resource import Resource
+from Learner.DataCollector import TweetDB, ReactionDB
 import threading
 from time import sleep
 import time

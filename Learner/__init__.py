@@ -1,2 +1,3 @@
-import DataProcessor
-import Resource
+import Learner.DataCollector
+import Learner.Resource
+

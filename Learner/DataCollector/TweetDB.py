@@ -3,7 +3,7 @@
 import os
 import sqlite3
 import json
-from Resource import Resource
+from Learner.Resource import Resource
 from contextlib import closing
 from datetime import datetime
 
