@@ -1,0 +1,8 @@
+div.post-wrapper {
+   width: 100%;
+   clear: both;
+}
+
+div.post-wrapper twitterwidget {
+   float:left;
+}
