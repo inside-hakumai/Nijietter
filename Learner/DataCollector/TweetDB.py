@@ -33,6 +33,15 @@ class TweetDB:
             c.execute(sql, user)
             conn.commit()
 
+    def get_tweet(self, batchsize: int, index: int):
+        with closing(sqlite3.connect(self.db_path)) as conn:
+            c = conn.cursor()
+
+            sql = 'SELECT * FROM tweets LIMIT ? OFFSET ?'
+            params = (batchsize, batchsize*index)
+            c.execute(sql, params)
+            return c.fetchall()
+
 
 class ReactionDB:
 
