@@ -20,7 +20,7 @@ class Entry:
             c = conn.cursor()
 
             # executeメソッドでSQL文を実行する
-            create_tw_table = "CREATE TABLE IF NOT EXISTS tweets (id VARCHAR PRIMARY KEY, json JSON)"
+            create_tw_table = "CREATE TABLE IF NOT EXISTS tweets (id VARCHAR PRIMARY KEY, json JSON, invalid INTEGER DEFAULT 0)"
             create_ra_table = "CREATE TABLE IF NOT EXISTS reactions (id VARCHAR, time VARCHAR, fav INTEGER, retweet INTEGER)"
             create_lb_table = "CREATE TABLE IF NOT EXISTS labels (id VARCHAR PRIMARY KEY, label INTEGER DEFAULT -1)"
             c.execute(create_tw_table)
@@ -65,6 +65,25 @@ class Entry:
         ret_val = True
         return ret_val
 
+    def set_as_invalid(self, post_id: str):
+        with closing(sqlite3.connect(self.db_path)) as conn:
+            c = conn.cursor()
+
+            sql = 'UPDATE tweets SET invalid = 1 WHERE id = ?'
+            params = (post_id, )
+
+            try:
+                c.execute(sql, params)
+                conn.commit()
+                ret_val = True
+            except:
+                import traceback
+                traceback.print_exc()
+                ret_val = False
+
+            return ret_val
+
+
     def get_tweet(self, batchsize: int, index: int):
         with closing(sqlite3.connect(self.db_path)) as conn:
             c = conn.cursor()
@@ -78,7 +97,7 @@ class Entry:
         with closing(sqlite3.connect(self.db_path)) as conn:
             c = conn.cursor()
 
-            sql = 'SELECT * FROM tweets WHERE id NOT IN (SELECT id FROM labels) LIMIT ? OFFSET ?'
+            sql = 'SELECT * FROM tweets WHERE invalid = 0 AND id NOT IN (SELECT id FROM labels) LIMIT ? OFFSET ?'
             params = (batchsize, batchsize*index)
             c.execute(sql, params)
             return c.fetchall()

@@ -55,14 +55,17 @@ def request():
 
         payload = {"url": url}
         res = requests.get('https://publish.twitter.com/oembed', params=payload)
-        print(res.text)
 
-        res = res.json()
+        if res.status_code == 404:
+            entry_db.set_as_invalid(post_id)
+            print("{0} --> invalid for 404".format(post_id))
+        else:
+            res = res.json()
 
-        ret_data.append({
-            "id"  : post_id,
-            "html": res["html"]
-        })
+            ret_data.append({
+                "id"  : post_id,
+                "html": res["html"]
+            })
 
     # ret_data = list(map(lambda li: {"id": li[0], "json": li[1]}, db_data))
     ret_data_dump = json.dumps(ret_data)
