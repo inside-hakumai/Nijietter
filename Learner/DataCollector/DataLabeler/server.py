@@ -5,13 +5,13 @@ from flask import Flask, render_template, request as freq, redirect, url_for
 import numpy as np
 from Learner.Resource import Resource
 from Learner.DataCollector.TweetDB import TweetDB, LabelDB
+from Learner.DataProcessor.Entry import Entry
 import json
 import requests
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 resource = Resource(FILE_DIR + "/../../config.json")
-tweet_db       = TweetDB(resource.get_collect_db_path())
-label_db       = LabelDB(resource.get_collect_db_path())
+entry_db = Entry(resource.get_collect_db_path())
 
 
 
@@ -43,7 +43,7 @@ def index():
 
 @app.route('/request', methods=['GET'])
 def request():
-    db_data = tweet_db.get_tweet(10, 0)
+    db_data = entry_db.get_unlabeled_tweet(10, 0)
 
     ret_data = []
 
@@ -54,7 +54,10 @@ def request():
         url        = "https://twitter.com/{0}/status/{1}".format(user_name, post_id)
 
         payload = {"url": url}
-        res = requests.get('https://publish.twitter.com/oembed', params=payload).json()
+        res = requests.get('https://publish.twitter.com/oembed', params=payload)
+        print(res.text)
+
+        res = res.json()
 
         ret_data.append({
             "id"  : post_id,
@@ -69,7 +72,7 @@ def request():
 
 @app.route('/register', methods=['GET'])
 def register():
-    if label_db.insert_label(freq.args.get("post-id"), int(freq.args.get("label"))):
+    if entry_db.insert_label(freq.args.get("post-id"), int(freq.args.get("label"))):
         return "ok"
     else:
         raise Exception("register fail")
