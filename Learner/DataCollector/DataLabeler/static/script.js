@@ -1,5 +1,43 @@
 
 $(window).on("load", function(){
+   $(document).on("change", 'input:radio', function(){
+      var radioval = $(this).val();
+      var post_id  = $(this).attr("data-post-id");
+      console.log(radioval);
+      console.log(post_id);
+
+
+      var labelValue = (radioval === "true") ? 1 : ( (radioval === "false") ? 0 : -1);
+      if (labelValue !== -1) {
+
+         $.ajax({
+            url: './register',
+            type: 'GET',
+            data: {
+               "post-id": post_id,
+               "label": labelValue
+            },
+            dataType: "text"
+         })
+         .done(function (data, textStatus, jqXHR) {
+            $("div[data-post-id=" + post_id + "]").remove();
+            if ($("main div.post-wrapper").length === 0) {
+               requestData();
+            }
+
+         })
+         .fail(function (jqXHR, textStatus, errorThrown) {
+            console.error(textStatus);
+            console.error(errorThrown);
+         });
+
+      }
+   });
+
+   requestData();
+});
+
+function requestData() {
    $.ajax({
       url:      './request',
       type:     'GET',
@@ -25,34 +63,4 @@ $(window).on("load", function(){
       console.error(textStatus);
       console.error(errorThrown);
    });
-
-   $(document).on("change", 'input:radio', function(){
-      var radioval = $(this).val();
-      var post_id  = $(this).attr("data-post-id");
-      console.log(radioval);
-      console.log(post_id);
-
-
-      var labelValue = (radioval === "true") ? 1 : ( (radioval === "false") ? 0 : -1);
-      if (labelValue !== -1) {
-
-         $.ajax({
-            url: './register',
-            type: 'GET',
-            data: {
-               "post-id": post_id,
-               "label": labelValue
-            },
-            dataType: "text"
-         })
-         .done(function (data, textStatus, jqXHR) {
-            $("div[data-post-id=" + post_id + "]").remove();
-         })
-         .fail(function (jqXHR, textStatus, errorThrown) {
-            console.error(textStatus);
-            console.error(errorThrown);
-         });
-
-      }
-   });
-});
+}
