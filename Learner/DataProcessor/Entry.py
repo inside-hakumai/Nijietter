@@ -101,3 +101,21 @@ class Entry:
             params = (batchsize, batchsize*index)
             c.execute(sql, params)
             return c.fetchall()
+    def get_labeled_reacted_tweet(self, reaction_interval=120, interval_torelance=10):
+        def filter_record(tuple):
+            created_time = datetime.strptime(json.loads(tuple[1])["created_at"], "%a %b %d %H:%M:%S %z %Y")
+            reacted_time = datetime.strptime(tuple[3], "%a %b %d %H:%M:%S %z %Y")
+            delta = reacted_time - created_time
+            return (reaction_interval-interval_torelance) <= delta.total_seconds() <= (reaction_interval+interval_torelance)
+
+        with closing(sqlite3.connect(self.db_path)) as conn:
+            c = conn.cursor()
+
+            sql = 'SELECT tweets.id, json, label, time, fav, retweet FROM tweets ' \
+                  'INNER JOIN labels ON tweets.id = labels.id ' \
+                  'INNER JOIN reactions ON tweets.id = reactions.id'
+            c.execute(sql)
+            tuples = c.fetchall()
+            filtered_tuples = list(filter(filter_record, tuples))
+            return filtered_tuples
+
