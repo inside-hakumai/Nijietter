@@ -57,6 +57,9 @@ class TextProcessor:
 
         return words
 
+    def calc_text_value(self, text):
+        return sum(map(lambda w: self.word_weight[w], self.parse_text(text)))
+
     # カウントではなく評価値
     def count_word_appearance(self):
         tweets = self.entry_db.get_labeled_tweet_text()

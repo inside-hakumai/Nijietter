@@ -6,13 +6,15 @@ import sqlite3
 from contextlib import closing
 from datetime import datetime
 from Learner import Resource
+from Learner import Model
 from Learner.DataProcessor import TrainDataIterator
 from Learner.DataProcessor import TextProcessor
 
 
 class Trainer:
 
-    def __init__(self, config_path: str = None):
+    def __init__(self, model: Model, config_path: str = None):
+        self.model = model
         self.resource = Resource(config_path) if config_path else Resource()
         self.train_data_iterator = TrainDataIterator()
         self.text_processor = TextProcessor()
@@ -55,7 +57,24 @@ class Trainer:
 
             conn.commit()
 
+    def train(self):
+        self.text_processor.set_train_data_db(self.output_path + "/train_result.db")
+
+        data_training = []
+        label_training = []
+        for data in self.train_data_iterator:
+            data_training.append([self.text_processor.calc_text_value(data[1]), int(data[4]), int(data[5])])
+            label_training.append(int(data[2]))
+
+        self.model.model.fit(data_training, label_training)
+
+        label_predict = self.model.model.predict(data_training)
+        from sklearn.metrics import accuracy_score
+        print(accuracy_score(label_training, label_predict))
+
 
 if __name__ == "__main__":
-    trainer = Trainer()
+    model = Model()
+    trainer = Trainer(model)
     trainer.prepare_word_weight()
+    trainer.train()
