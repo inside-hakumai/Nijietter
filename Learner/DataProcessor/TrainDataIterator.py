@@ -19,6 +19,7 @@ class TrainDataIterator:
 
     def __next__(self):
         if self.current == len(self.order):
+            self.reset()
             raise StopIteration()
         ret_value = list(self.tweets[self.order[self.current]])
         ret_value[1] = extract_tweet_text(ret_value[1])
