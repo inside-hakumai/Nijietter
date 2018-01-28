@@ -25,6 +25,9 @@ class TrainDataIterator:
         self.current += 1
         return ret_value
 
+    def reset(self):
+        self.current = 0
+
 
 url_regex = r"(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?"
 
