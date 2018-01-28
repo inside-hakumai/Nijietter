@@ -7,6 +7,8 @@ import MeCab
 import traceback
 from Learner.Resource import Resource
 from Learner.DataProcessor.Entry import Entry
+import sqlite3
+from contextlib import closing
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 resource = Resource(FILE_DIR + "/../config.json")
@@ -17,10 +19,28 @@ PARSE_TEXT_ENCODING = 'utf-8'
 
 class TextProcessor:
 
-    def __init__(self, mecab_dict_path=resource.get_mecab_dict_path(), entry_db_path=resource.get_collect_db_path()):
+    def __init__(self, mecab_dict_path=resource.get_mecab_dict_path(), entry_db_path=resource.get_collect_db_path(), train_data_db_path=None):
         self.mc       = MeCab.Tagger(" -d {0}".format(mecab_dict_path))
         self.entry_db = Entry(entry_db_path)
         self.mc.parse("")
+
+        self.train_data_db_path = None
+        self.word_weight = {}
+        if train_data_db_path:
+            self.set_train_data_db(train_data_db_path)
+
+    def set_train_data_db(self, db_path):
+        if os.path.exists(db_path):
+            self.train_data_db_path = db_path
+
+            with closing(sqlite3.connect(self.train_data_db_path)) as conn:
+                c = conn.cursor()
+                select_query = "SELECT word, weight FROM words"
+                c.execute(select_query)
+                for word, weight in c.fetchall():
+                    self.word_weight[word] = weight
+        else:
+            raise FileNotFoundError(db_path)
 
     def parse_text(self, text):
         # text = text.encode(PARSE_TEXT_ENCODING)
