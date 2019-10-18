@@ -8,7 +8,7 @@ pep8==1.7.1
 powerline-status==2.6
 python-dateutil==2.6.1
 pytz==2017.3
-requests==2.18.4
+requests==2.20.0
 requests-oauthlib==0.8.0
 six==1.11.0
 tweepy==3.5.0
